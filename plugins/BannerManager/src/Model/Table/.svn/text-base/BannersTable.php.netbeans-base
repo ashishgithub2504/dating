@@ -1,0 +1,102 @@
+<?php
+namespace BannerManager\Model\Table;
+
+use Cake\ORM\Query;
+use Cake\ORM\RulesChecker;
+use Cake\ORM\Table;
+use Cake\Validation\Validator;
+use Cake\Core\Configure;
+/**
+ * Banners Model
+ *
+ * @property \BannerManager\Model\Table\BannerImagesTable|\Cake\ORM\Association\HasMany $BannerImages
+ *
+ * @method \BannerManager\Model\Entity\Banner get($primaryKey, $options = [])
+ * @method \BannerManager\Model\Entity\Banner newEntity($data = null, array $options = [])
+ * @method \BannerManager\Model\Entity\Banner[] newEntities(array $data, array $options = [])
+ * @method \BannerManager\Model\Entity\Banner|bool save(\Cake\Datasource\EntityInterface $entity, $options = [])
+ * @method \BannerManager\Model\Entity\Banner patchEntity(\Cake\Datasource\EntityInterface $entity, array $data, array $options = [])
+ * @method \BannerManager\Model\Entity\Banner[] patchEntities($entities, array $data, array $options = [])
+ * @method \BannerManager\Model\Entity\Banner findOrCreate($search, callable $callback = null, $options = [])
+ *
+ * @mixin \Cake\ORM\Behavior\TimestampBehavior
+ */
+class BannersTable extends Table
+{
+
+    /**
+     * Initialize method
+     *
+     * @param array $config The configuration for the Table.
+     * @return void
+     */
+    public function initialize(array $config)
+    {
+        parent::initialize($config);
+
+        $this->setTable('banners');
+        $this->setDisplayField('title');
+        $this->setPrimaryKey('id');
+
+        $this->addBehavior('Timestamp');
+
+        $this->hasMany('BannerImages', [
+            'foreignKey' => 'banner_id',
+            'className' => 'BannerManager.BannerImages',
+            'dependent' => true,
+            'cascadeCallbacks' => true,
+        ]);
+    }
+
+    /**
+     * Default validation rules.
+     *
+     * @param \Cake\Validation\Validator $validator Validator instance.
+     * @return \Cake\Validation\Validator
+     */
+    public function validationDefault(Validator $validator)
+    {
+        $validator
+            ->integer('id')
+            ->allowEmpty('id', 'create');
+
+        $validator
+            ->scalar('title')
+            ->maxLength('title', 32)
+            ->requirePresence('title', 'create')
+            ->notEmpty('title');
+
+        $validator
+            ->boolean('status')
+            ->requirePresence('status', 'create')
+            ->notEmpty('status');
+
+        $validator
+            ->integer('sort_order')
+            ->requirePresence('sort_order', 'create')
+            ->notEmpty('sort_order');
+
+        return $validator;
+    }
+    
+    /**
+     * This default function is a 'finder' to use for call by default banner those define in setting
+     *
+     * @param \Cake\ORM\Query; $query The rules object to be modified.
+     * @return \Cake\ORM\Query
+     */
+    public function findDefault(Query $query)
+    {
+        if(Configure::read('Setting.DEFAULT_BANNER')){
+            $conditions['Banners.id'] = trim(Configure::read('Setting.DEFAULT_BANNER'));
+        }
+        $conditions['Banners.status'] = 1;
+        $query->where($conditions);
+        $query->contain(['BannerImages' => function($q){
+            return $q->order(['BannerImages.sort_order' => 'ASC']);
+        }]);
+      
+        return $query;
+    }
+    
+}

@@ -1,0 +1,17 @@
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/library/!svn/ver/5/trunk/plugins/CategoryManager/config/Migrations
+END
+20180201064636_CreateCategories.php
+K 25
+svn:wc:ra_dav:version-url
+V 107
+/svn/library/!svn/ver/5/trunk/plugins/CategoryManager/config/Migrations/20180201064636_CreateCategories.php
+END
+schema-dump-default.lock
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/library/!svn/ver/5/trunk/plugins/CategoryManager/config/Migrations/schema-dump-default.lock
+END

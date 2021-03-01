@@ -1,0 +1,32 @@
+  /**
+     * ChangeFlag method
+     *
+     * @param string|null &id flag id.
+     * @param string|null &id field those update table field.
+     * @param string|null &status Admin status.
+     * @return \Cake\Http\Response|null Redirects to index.
+     * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
+     */
+    public function changeFlag()
+    {
+        if ($this->request->is('ajax') && $this->request->getData('id')) {
+            $status = $this->{{ currentModelName }}->newEntity();
+            $field = $this->request->getData('field');
+            $status->id = $this->request->getData('id');
+            $status->$field = $this->request->getData('status');
+            if ($this->{{ currentModelName }}->save($status)) {
+                $msg = $this->request->getData($field) == 1 ? __("Your {$field} has activated") : __("Your {$field} has deactivated");
+                $response = ["success" => true, "err_msg" => $msg];
+            } else {
+                $response = ["success" => false, "err_msg" => __("Your Process faild. please try again!!")];
+            }
+            $this->set([
+                'success' => $response['success'],
+                'responce' => 200,
+                'message' => $response['err_msg'],
+                '_jsonOptions' => JSON_FORCE_OBJECT,
+                '_serialize' => ['success', 'responce', 'message']
+            ]);
+        }
+        
+    }

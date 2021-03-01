@@ -1,0 +1,17 @@
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/library/!svn/ver/7/trunk/plugins/BannerManager/tests/Fixture
+END
+BannersFixture.php
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/library/!svn/ver/7/trunk/plugins/BannerManager/tests/Fixture/BannersFixture.php
+END
+BannerImagesFixture.php
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/library/!svn/ver/7/trunk/plugins/BannerManager/tests/Fixture/BannerImagesFixture.php
+END

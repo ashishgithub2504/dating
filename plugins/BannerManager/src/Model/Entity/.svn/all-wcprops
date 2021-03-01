@@ -1,0 +1,17 @@
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/library/!svn/ver/7/trunk/plugins/BannerManager/src/Model/Entity
+END
+Banner.php
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/library/!svn/ver/7/trunk/plugins/BannerManager/src/Model/Entity/Banner.php
+END
+BannerImage.php
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/library/!svn/ver/7/trunk/plugins/BannerManager/src/Model/Entity/BannerImage.php
+END

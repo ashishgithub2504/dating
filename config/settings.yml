@@ -1,0 +1,25 @@
+ADDRESS: 'Mansarovar Jaipur'
+ADMIN_DATE_FORMAT: 'd F, Y'
+ADMIN_DATE_TIME_FORMAT: 'd F, Y H:i A'
+ADMIN_EMAIL: jainashish2504@gmail.com
+ADMIN_PAGE_LIMIT: '20'
+CONTACT_US_TEXT: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.'
+DEFAULT_CURRENCY: USD
+DEVELOPMENT_MODE: '1'
+FROM_EMAIL: jainashish2504@gmail.com
+FRONT_DATE_FORMAT: 'd F, Y'
+FRONT_DATE_TIME_FORMAT: 'd F, Y'
+FRONT_PAGE_LIMIT: '20'
+GOOGLE_MAP_KEY: AIzaSyD9pg6_fzfgDHJFSW0wkrIcuCOw_V9qOfM
+MAIN_FAVICON: uploads/outpu.png
+MAIN_LOGO: uploads/ajay.png
+RESET_URL_EXPIRED: '24'
+SMTP_ALLOW: '1'
+SMTP_EMAIL_HOST: test
+SMTP_PASSWORD: '32423234'
+SMTP_PORT: '587'
+SMTP_TLS: '0'
+SMTP_USERNAME: testsmtp@24livehost.com
+SYSTEM_APPLICATION_NAME: Dating
+TELEPHONE: +91-7665880635
+WEBSITE_OWNER: Rajesh

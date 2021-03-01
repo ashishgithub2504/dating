@@ -1,0 +1,17 @@
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/library/!svn/ver/5/trunk/plugins/CategoryManager/src/Template/Cell/Category
+END
+get_parent_categories.ctp
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/svn/library/!svn/ver/5/trunk/plugins/CategoryManager/src/Template/Cell/Category/get_parent_categories.ctp
+END
+display.ctp
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/library/!svn/ver/5/trunk/plugins/CategoryManager/src/Template/Cell/Category/display.ctp
+END

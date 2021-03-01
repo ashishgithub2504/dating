@@ -1,0 +1,115 @@
+{#
+/**
+ * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
+ * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ *
+ * Licensed under The MIT License
+ * For full copyright and license information, please see the LICENSE.txt
+ * Redistributions of files must retain the above copyright notice.
+ * @author        Hanuman Yadav
+ * @author        Hanuman yadav <jainashish2504@gmail.com>
+ * @copyright     2018-19 The Ashish Cakephp Team (https://www.ashsih.com)
+ * @link          http://cakephp.org CakePHP(tm) Project
+ * @since         2.0.0
+ * @license       http://www.opensource.org/licenses/mit-license.php MIT License
+ */
+#}
+{% set fields = Bake.filterFields(fields, schema, modelObject) %}
+<section class="content-header">
+    <h1>
+        <?php echo __('Manage {{ singularHumanName }}'); ?> <small>
+            <?php echo empty(${{ singularVar }}->{{ primaryKey[0] }}) ? __('Add New {{ singularHumanName|lower }}') : __('Edit {{ singularHumanName|lower }}'); ?>
+        </small>
+    </h1>
+    <?= $this->element('breadcrumb'); ?>
+</section>
+{#<nav class="large-3 medium-4 columns" id="actions-sidebar">
+    <ul class="side-nav">
+        <li class="heading"><?= __('Actions') ?></li>
+{% if strpos(action, 'add') is same as(false) %}
+        <li><?= $this->Form->postLink(
+                __('Delete'),
+                ['action' => 'delete', ${{ singularVar }}->{{ primaryKey[0] }}],
+                ['confirm' => __('Are you sure you want to delete # {0}?', ${{ singularVar }}->{{ primaryKey[0] }})]
+            )
+        ?></li>
+{% endif %}
+        <li><?= $this->Html->link(__('List {{ pluralHumanName }}'), ['action' => 'index']) ?></li>
+        {{- "\n" }}
+{%- set done = [] %}
+{% for type, data in associations %}
+    {%- for alias, details in data %}
+        {%- if details.controller is not same as(_view.name) and details.controller not in done %}
+        <li><?= $this->Html->link(__('List {{ alias|underscore|humanize }}'), ['controller' => '{{ details.controller }}', 'action' => 'index']) ?></li>
+        <li><?= $this->Html->link(__('New {{ alias|singularize|underscore|humanize }}'), ['controller' => '{{ details.controller }}', 'action' => 'add']) ?></li>
+        {{- "\n" }}
+        {%- set done = done|merge([details.controller]) %}
+        {%- endif %}
+    {%- endfor %}
+{% endfor %}
+    </ul>
+</nav>
+#}
+<section class="content" data-table="{{ pluralVar }}">
+    <div class="box box-info {{ pluralVar }}">
+        <div class="box-header with-border">
+            <h3 class="box-title"><?= __(empty(${{ singularVar }}->{{ primaryKey[0] }}) ? 'Add {{ singularHumanName }}' : 'Edit {{ singularHumanName }}') ?></h3>
+            <?php echo $this->Html->link("<i class='fa fa-fw fa-chevron-circle-left'></i> ".__('Back'), ['action' => 'index'], ['class' => 'btn btn-default pull-right', 'title' => __('Cancel'),'escape'=>false]); ?>
+        </div><!-- /.box-header -->
+    <?php
+    $this->loadHelper('Form', [
+        'templates' => 'default_form',
+    ]);
+    ?>
+    <?= $this->Form->create(${{ singularVar }}, ['role' => 'form', 'enctype' => 'multipart/form-data']) ?>
+   <div class="box-body">
+       <div class="row">
+                <div class="col-md-12">
+<?php
+{% for field in fields if field not in primaryKey %}
+    {%- if keyFields[field] %}
+        {%- set fieldData = Bake.columnData(field, schema) %}
+        {%- if fieldData.null %}
+            echo $this->Form->control('{{ field }}', ['options' => ${{ keyFields[field] }}, 'empty' => true, 'class' => 'form-control']);
+            {{- "\n" }}
+        {%- else %}
+            echo $this->Form->control('{{ field }}', ['options' => ${{ keyFields[field] }},'class' => 'form-control']);
+            {{- "\n" }}
+        {%- endif %}
+    {%- elseif field not in ['created', 'modified', 'updated','deleted_date'] %}
+        {%- set fieldData = Bake.columnData(field, schema) %}
+        {%- if fieldData.type in ['date', 'datetime', 'time'] and fieldData.null %}
+            echo $this->Form->control('{{ field }}', ['empty' => true,'type'=>'text', 'class' => 'form-control datepicker', 'placeholder' => __('{{ field|underscore|humanize }}')]);
+            {{- "\n" }}
+        {%- else %}
+            {%-  if field == "status" %}
+            echo $this->Form->control('{{ field }}',['options'=>[1 => "Active", 0 => "Inactive"],'class' => 'form-control']);
+            {%- else %}
+            {%- if fieldData.type in ['tinyint'] and fieldData.null %}
+                echo $this->Form->control('{{ field }}');
+            {%- else %}
+                echo $this->Form->control('{{ field }}',['class' => 'form-control', 'placeholder' => __('{{ field|underscore|humanize }}')]);
+            {%- endif %}
+            {%- endif %}
+    {{- "\n" }}
+        {%- endif %}
+    {%- endif %}
+{%- endfor %}
+
+{%- if associations.BelongsToMany %}
+    {%- for assocName, assocData in associations.BelongsToMany %}
+            echo $this->Form->control('{{ assocData.property }}._ids', ['options' => ${{ assocData.variable }}]);
+    {{- "\n" }}
+    {%- endfor %}
+{% endif %}
+        ?>
+</div>
+</div>
+    </div>
+        <div class="box-footer">
+            <?php echo $this->Form->button("<i class='fa fa-fw fa-save'></i> ".__('Submit'), ['class' => 'btn btn-primary btn-flat', 'title' => __('Submit')]); ?>  
+            <?php echo $this->Html->link("<i class='fa fa-fw fa-chevron-circle-left'></i> ".__('Back'), ['action' => 'index'], ['class' => 'btn btn-warning btn-flat', 'title' => __('Cancel'),'escape'=>false]); ?>
+        </div>
+    <?= $this->Form->end() ?>
+</div>
+        </section>

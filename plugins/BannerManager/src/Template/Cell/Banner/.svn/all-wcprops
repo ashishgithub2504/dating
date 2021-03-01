@@ -1,0 +1,17 @@
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/library/!svn/ver/7/trunk/plugins/BannerManager/src/Template/Cell/Banner
+END
+display.ctp
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/library/!svn/ver/7/trunk/plugins/BannerManager/src/Template/Cell/Banner/display.ctp
+END
+default_banner.ctp
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/library/!svn/ver/7/trunk/plugins/BannerManager/src/Template/Cell/Banner/default_banner.ctp
+END

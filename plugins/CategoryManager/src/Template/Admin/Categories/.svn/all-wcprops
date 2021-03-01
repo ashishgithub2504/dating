@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/library/!svn/ver/5/trunk/plugins/CategoryManager/src/Template/Admin/Categories
+END
+view.ctp
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/library/!svn/ver/5/trunk/plugins/CategoryManager/src/Template/Admin/Categories/view.ctp
+END
+index.ctp
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/library/!svn/ver/5/trunk/plugins/CategoryManager/src/Template/Admin/Categories/index.ctp
+END
+add.ctp
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/library/!svn/ver/5/trunk/plugins/CategoryManager/src/Template/Admin/Categories/add.ctp
+END

@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/library/!svn/ver/7/trunk/plugins/BannerManager/config/Migrations
+END
+20180423103116_CreateBanners.php
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/svn/library/!svn/ver/7/trunk/plugins/BannerManager/config/Migrations/20180423103116_CreateBanners.php
+END
+20180423103125_CreateBannerImages.php
+K 25
+svn:wc:ra_dav:version-url
+V 107
+/svn/library/!svn/ver/7/trunk/plugins/BannerManager/config/Migrations/20180423103125_CreateBannerImages.php
+END
+schema-dump-default.lock
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/library/!svn/ver/7/trunk/plugins/BannerManager/config/Migrations/schema-dump-default.lock
+END

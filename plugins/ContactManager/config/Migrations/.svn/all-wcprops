@@ -1,0 +1,17 @@
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/library/!svn/ver/5/trunk/plugins/ContactManager/config/Migrations
+END
+schema-dump-default.lock
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/library/!svn/ver/5/trunk/plugins/ContactManager/config/Migrations/schema-dump-default.lock
+END
+20180118115647_CreateInquiries.php
+K 25
+svn:wc:ra_dav:version-url
+V 105
+/svn/library/!svn/ver/5/trunk/plugins/ContactManager/config/Migrations/20180118115647_CreateInquiries.php
+END
