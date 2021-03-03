@@ -62,6 +62,13 @@ $ctrl = strtolower($this->request->getParam('controller'));
                 ?>
             </li>
 
+            <li class="<?php echo (in_array($act, array("index", "add", "edit", "view")) && $ctrl == "categories") ? "active" : ""; ?>">
+                <?php
+                echo $this->Html->link("<i class=\"fa fa-circle-o\"></i> Category Manager", ["controller" => "categories", "action" => "index", "plugin" => false], ["class" => "", "escape" => false]);
+
+                ?>
+            </li>
+
              <li class="treeview <?php echo $cms = (in_array($act, array("index", "add", "view")) && (in_array($ctrl, array("pages", "modules", "navigations")))) ? "active" : ""; ?>"> <a href="#"> <i class="fa fa-th"></i> <span>CMS Manager</span> <span class="pull-right-container"> <i class="fa fa-angle-right pull-right"></i> </span> </a>
                 <ul class="treeview-menu <?php echo $cms == "active" ? "menu-open" : ""; ?>">
                     <li class="<?php echo (in_array($act, array("index", "add", "edit", "view")) && $ctrl == "pages") ? "active" : ""; ?>">

@@ -55,9 +55,14 @@ class UsersTable extends Table
             'foreignKey' => 'user_id',
             'className' => 'UserManager.UserTokens'
         ]);
-        $this->hasMany('Venues', [
+        $this->hasMany('UserPhotos', [
             'foreignKey' => 'user_id',
-            'className' => 'UserManager.Venues'
+        ]);
+        $this->hasMany('UserVideos', [
+            'foreignKey' => 'user_id',
+        ]);
+        $this->hasMany('userGifts', [
+            'foreignKey' => 'user_id',
         ]);
         $this->belongsToMany('AccountTypes', [
             'foreignKey' => 'user_id',
@@ -126,6 +131,7 @@ class UsersTable extends Table
         $validator
             ->scalar('mobile')
             ->maxLength('mobile', 20)
+            ->add('mobile','unique',['rule' => 'validateUnique','provider'=>'table','message'=>'You already have registered with us.'])
             ->allowEmpty('mobile');
 
         $validator

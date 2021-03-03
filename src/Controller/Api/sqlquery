@@ -1,0 +1,21 @@
+CREATE TABLE `user_call_info` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_from` int(11) NOT NULL,
+  `user_to` int(11) NOT NULL,
+  `type` enum('audio','video') NOT NULL,
+  `start_time` datetime,
+  `end_time` datetime,
+  `status` enum('active','inactive') DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+ALTER TABLE `dating`.`users` 
+ADD UNIQUE INDEX `mobile_UNIQUE` (`mobile` ASC);
+
+CREATE TABLE `followers` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `follow_from` int(11) NOT NULL,
+  `follow_to` int(11) NOT NULL,
+  `status` enum('follow','unfollow') DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;

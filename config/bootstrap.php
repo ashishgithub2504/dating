@@ -213,7 +213,7 @@ header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
 //Inflector::rules('transliteration', ['/å/' => 'aa']);
 //Plugin::load('CatalogManager', ['bootstrap' => false, 'routes' => true]);
 
-Plugin::load('CategoryManager', ['bootstrap' => false, 'routes' => true]);
+// Plugin::load('CategoryManager', ['bootstrap' => false, 'routes' => true]);
 
 Plugin::load('BannerManager', ['bootstrap' => false, 'routes' => true]);
 
