@@ -3,6 +3,7 @@ namespace App\Controller\Api;
 
 use App\Controller\AppController;
 use Cake\ORM\TableRegistry;
+use Hayko\Mongodb\ORM\Table;
 use Cake\Routing\Router;
 use Cake\Core\Configure;
 use CatalogManager\Model\Entity\Product;
@@ -12,6 +13,9 @@ use Cake\Utility\Security;
 use Firebase\JWT\JWT;
 use Cake\Http\ServerRequest;
 use Cake\I18n\Time;
+use Cake\Datasource\ConnectionManager;
+use League\Monga;
+
 
 class WebserviceController extends AppController {
 
@@ -123,7 +127,9 @@ class WebserviceController extends AppController {
             // $this->request->data = $this->request->data['detail'];
             // print_r($this->request->data);
             $user = $this->Auth->identify();
+            // echo Router::url('/', true);
             // print_r($user); die;
+            $user['profile_photo'] = Router::url('/', true).str_replace('webroot/','',$user['photo_dir']).$user['profile_photo'];
             if ($user) {
                 $user['token'] = $this->token();
 
@@ -172,11 +178,16 @@ class WebserviceController extends AppController {
         $user = $this->Users->patchEntity($user, $this->request->data);
         
         if ($this->Users->save($user)) {
-            $response = ['status'=>true,'code' => 200 ,'message'=>'You have successfully registred','data' => $user];
+            $userInfo = $this->_loginresponse($user->id);
+            $response = ['status'=>true,'code' => 200 ,'message'=>'You have successfully registred','data' => $userInfo];
         }else{
              $response['data'] = $user->errors();
         }
         $this->response($response);
+    }
+
+    private function _loginresponse($id) {
+        return $this->Users->find()->where(['id'=>$id])->first();
     }
 
     public function staticpage() {
@@ -349,19 +360,26 @@ class WebserviceController extends AppController {
         ];
         $postData = $this->request->getData();
         if(!empty($postData)) {
-            $this->UserCallInfo = TableRegistry::get('UserCallInfo');
-            $userCall = $this->UserCallInfo->newEntity();
-            $userCall->user_from = $this->Auth->user('id');
-            $userCall->user_to = $postData['user_id'];
-            $userCall->type = $postData['type'];
-            $userCall->start_time = $postData['start_time'];
-            $userCall->end_time = $postData['end_time'];
-            $userCall->status = 'active';
-            if($this->UserCallInfo->save($userCall)) {
+            $con = new \MongoDB\Client("mongodb://localhost:27017");  
+            // Creating Database  
+            $db = $con->dating;  
+            // Creating Document  
+            $collection = $db->user_call_info;  
+            // Insering Record  
+            $data = $collection->insertOne( [ 
+                'user_from' =>$this->Auth->user('id'),
+                'user_to' =>$postData['user_id'], 
+                'type' => $postData['type'],
+                'start_time'  => $postData['start_time'],
+                'end_time' => $postData['end_time'],
+                'status' => 'active'
+            ] );  
+            if($data->getInsertedCount()) {
                 $response = [
                     'status' => true,
                     'message' => 'Call detail saved successfully',
-                    'code' => 200
+                    'code' => 200,
+                    'data' => $data->getInsertedId()
                 ];
             }    
         }
@@ -411,5 +429,42 @@ class WebserviceController extends AppController {
                 Security::salt())
             // '_serialize' => ['success', 'data']
         ]);
+    }
+
+    public function mongodb() 
+    {
+        // require 'vendor/autoload.php';  
+        // Creating Connection  
+        $con = new \MongoDB\Client("mongodb://localhost:27017");  
+        // Creating Database  
+        $db = $con->dating;  
+        // Creating Document  
+        $collection = $db->user_call_info;  
+        // Insering Record  
+        // $collection->insertOne( [ 'name' =>'Peter', 'email' =>'peter@abc.com' ] );  
+        // Fetching Record  
+        $record = $collection->find( [ 'status' =>'active'] );
+
+        foreach ($record as $employe) {  
+            echo $employe['user_from'], ': ', $employe['user_to']."<br>";
+            echo $employe['type'], ': ', $employe['status']."<br>";  
+        }  
+        die;
+        // $collection = $mongodb->collection('collection_name');
+        // $database_list = $mongodb->listDatabases(); 
+        // print_r($database);die;
+        // $mongo = new Mongo('localhost:27017');
+        // $db= $mongo->selectDB('dating');
+        // $collection = $db->selectCollection('user_call_info');
+        // $result = $collection->find();
+        // $connection = ConnectionManager::get('default2','default');
+        // ConnectionManager::alias('default2','default');
+        // $result = $connection.collection.find();
+        //$results = $connection->execute('SELECT * FROM user_call_info')->fetchAll('assoc');
+        // $obj = new Table(['user_call_info']);
+        // $data = $obj->find('all');
+        // $data = $this->UserCallInfo->find('all')->toArray();
+        // $data = $this->UserCallInfo->find()->where(['status'=>'active'])->toArray();
+        print_r($result); die;
     }
 }

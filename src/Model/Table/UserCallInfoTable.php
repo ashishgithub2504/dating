@@ -1,11 +1,11 @@
 <?php
-namespace App\Model\Table;
+namespace Hayko\Mongodb\ORM;
 
-use Cake\ORM\Query;
-use Cake\ORM\RulesChecker;
-use Cake\ORM\Table;
-use Cake\Validation\Validator;
-
+// use Cake\ORM\Query;
+// use Cake\ORM\RulesChecker;
+// use Cake\ORM\Table;
+// use Cake\Validation\Validator;
+use Hayko\Mongodb\ORM\Table;
 /**
  * UserCallInfo Model
  *
@@ -26,14 +26,14 @@ class UserCallInfoTable extends Table
      * @param array $config The configuration for the Table.
      * @return void
      */
-    public function initialize(array $config)
-    {
-        parent::initialize($config);
+    // public function initialize(array $config)
+    // {
+    //     parent::initialize($config);
 
-        $this->setTable('user_call_info');
-        $this->setDisplayField('id');
-        $this->setPrimaryKey('id');
-    }
+    //     $this->setTable('user_call_info');
+    //     $this->setDisplayField('id');
+    //     $this->setPrimaryKey('id');
+    // }
 
     /**
      * Default validation rules.
@@ -41,39 +41,39 @@ class UserCallInfoTable extends Table
      * @param \Cake\Validation\Validator $validator Validator instance.
      * @return \Cake\Validation\Validator
      */
-    public function validationDefault(Validator $validator)
-    {
-        $validator
-            ->integer('id')
-            ->allowEmptyString('id', 'create');
+    // public function validationDefault(Validator $validator)
+    // {
+    //     $validator
+    //         ->integer('id')
+    //         ->allowEmptyString('id', 'create');
 
-        $validator
-            ->integer('user_from')
-            ->requirePresence('user_from', 'create')
-            ->allowEmptyString('user_from', false);
+    //     $validator
+    //         ->integer('user_from')
+    //         ->requirePresence('user_from', 'create')
+    //         ->allowEmptyString('user_from', false);
 
-        $validator
-            ->integer('user_to')
-            ->requirePresence('user_to', 'create')
-            ->allowEmptyString('user_to', false);
+    //     $validator
+    //         ->integer('user_to')
+    //         ->requirePresence('user_to', 'create')
+    //         ->allowEmptyString('user_to', false);
 
-        $validator
-            ->scalar('type')
-            ->requirePresence('type', 'create')
-            ->allowEmptyString('type', false);
+    //     $validator
+    //         ->scalar('type')
+    //         ->requirePresence('type', 'create')
+    //         ->allowEmptyString('type', false);
 
-        $validator
-            ->dateTime('start_time')
-            ->allowEmptyDateTime('start_time');
+    //     $validator
+    //         ->dateTime('start_time')
+    //         ->allowEmptyDateTime('start_time');
 
-        $validator
-            ->dateTime('end_time')
-            ->allowEmptyDateTime('end_time');
+    //     $validator
+    //         ->dateTime('end_time')
+    //         ->allowEmptyDateTime('end_time');
 
-        $validator
-            ->scalar('status')
-            ->allowEmptyString('status');
+    //     $validator
+    //         ->scalar('status')
+    //         ->allowEmptyString('status');
 
-        return $validator;
-    }
+    //     return $validator;
+    // }
 }

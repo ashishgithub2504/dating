@@ -1,8 +1,8 @@
 <?php
 namespace App\Model\Entity;
 
-use Cake\ORM\Entity;
-
+// use Cake\ORM\Entity;
+use Hayko\Mongodb\ORM\Entity;
 /**
  * UserCallInfo Entity
  *

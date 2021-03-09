@@ -35,6 +35,8 @@ class Application extends BaseApplication
      */
     public function bootstrap()
     {
+        $this->addPlugin('CakeMonga');
+
         $this->addPlugin('ADmad/JwtAuth');
 
         //$this->addPlugin('catalog_manager');

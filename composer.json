@@ -7,6 +7,7 @@
     "require": {
         "php": ">=5.6",
         "admad/cakephp-glide": "^3.0",
+        "admad/cakephp-jwt-auth": "2.3.0",
         "cakephp/cakephp": "3.7.0-RC1",
         "cakephp/elastic-search": "^2.0",
         "cakephp/migrations": "^2.0.0",
@@ -14,12 +15,14 @@
         "dereuromark/cakephp-queue": "^3.12",
         "dereuromark/cakephp-tools": "^1.7",
         "fzaninotto/faker": "^1.8",
+        "hayko/mongodb": "dev-master",
         "josegonzalez/cakephp-upload": "^4.0",
         "josegonzalez/dotenv": "3.*",
+        "lewestopher/cakephp-monga": "^0.5.0",
         "lorenzo/audit-stash": "^2.0",
         "lorenzo/cakephp-email-queue": "^3.1",
         "mobiledetect/mobiledetectlib": "2.*",
-        "admad/cakephp-jwt-auth": "2.3.0"
+        "mongodb/mongodb": "^1.8"
     },
     "require-dev": {
         "cakephp/bake": "^1.1",

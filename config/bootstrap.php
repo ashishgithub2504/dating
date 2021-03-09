@@ -219,3 +219,6 @@ Plugin::load('BannerManager', ['bootstrap' => false, 'routes' => true]);
 
 Plugin::load('ContactManager', ['bootstrap' => false, 'routes' => true]);
 Plugin::load('ADmad/JwtAuth');
+// Plugin::load('Hayko/Mongodb');
+// Plugin::load('mongodb',['bootstrap'=>false,'routes' => true]);
+Plugin::load('CakeMonga');
