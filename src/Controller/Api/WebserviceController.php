@@ -46,7 +46,13 @@ class WebserviceController extends AppController {
         $Details = $this->userPlans->find();
         $Details = $Details->where(['status' => 'active']);
         $sumOftotal_coin =  $Details->sumOf('no_of_coin');
-
+        $Gifts = TableRegistry::get('Gifts')->find()->where(['status'=>'active'])->toArray();
+        // print_r($Gifts); die;
+        if(!empty($Gifts)) {
+            foreach ($Gifts as $key => $value) {
+                $Gifts[$key]['image'] = Router::url('/', true).'img' . DS . 'uploads' . DS . 'gifts' . DS.$value['image'];
+            }
+        }
         // print_r($sumOftotal_downtime); die;
         $this->userPlans->find()->where(['status'=>'active']);
         $response = [
@@ -55,7 +61,8 @@ class WebserviceController extends AppController {
             'code' => 200,
             'data' => [
                 'categories' => $users,
-                'total_coin' => $sumOftotal_coin
+                'total_coin' => $sumOftotal_coin,
+                'Gifts' => !empty($Gifts)?$Gifts:[]
             ]
         ];
         $this->response($response);
@@ -67,9 +74,33 @@ class WebserviceController extends AppController {
             'message' => 'User Not found',
             'code' => 404
         ];
-        if(!empty($this->request->getData('user_id'))) {
-            $userDetails = $this->Users->find()->contain(['userPhotos','UserVideos','userGifts'])->select(['id','username','first_name','last_name','dob','profile_photo','photo_dir','eye_color','hair_color','height','audio_call_rate','video_call_rate'])->where(['status'=>'1','id'=>$this->request->getData('user_id')])->first();
-        }
+        // if(!empty($this->request->getData('user_id'))) {
+            $userDetails = $this->Users->find()
+                            ->contain(['userPhotos','UserVideos'
+                                // ,'userGifts'=>function($q) {
+                                //       return $q->contain(['Gifts']);
+                                // }
+                            ])
+                            ->select(['id','username','first_name','last_name','dob','profile_photo','photo_dir','eye_color','hair_color','height','audio_call_rate','video_call_rate','sex','about_us','country','mobile'])
+                            ->where([
+                                'status'=>'1',
+                                'id'=> !empty($this->request->getData('user_id')) ? $this->request->getData('user_id') : $this->Auth->user('id')
+                            ])
+                            ->first();
+            $userDetails['profile_photo'] = !empty($userDetails['profile_photo']) ? Router::url('/', true).str_replace('webroot/','',$userDetails['photo_dir']).$userDetails['profile_photo'] : Router::url('/', true).'img/user.png';
+            
+            if(!empty($userDetails['user_photos'])) {
+                foreach ($userDetails['user_photos'] as $key => $value) {
+                    $userDetails['user_photos'][$key]['image'] = Router::url('/', true).'img' . DS . 'uploads' . DS . 'users' . DS . 'images' . DS.$value['image'];
+                }
+            }
+
+            if(!empty($userDetails['user_videos'])) {
+                foreach ($userDetails['user_videos'] as $key => $value) {
+                    $userDetails['user_videos'][$key]['image'] = Router::url('/', true).'img' . DS . 'uploads' . DS . 'users' . DS . 'videos' . DS.$value['image'];
+                }
+            }
+        // }
         $response = [
             'status' => true,
             'message' => 'List found',
@@ -78,42 +109,6 @@ class WebserviceController extends AppController {
                $userDetails
             ]
         ];
-        $this->response($response);
-    }
-
-    public function getnavigation() {
-        
-        $categories = $this->Category->find()
-            ->where(['status'=>1,'parent_id' => 0])
-            ->contain(['Products' => function($q) {
-                return $q->select(['id','title','slug']);
-            }])
-            ->hydrate(false)
-            ->toArray();
-        $category = [];
-        foreach($categories as $key=>$val) {
-            $category[$key]['label'] = $val['title'];
-            $category[$key]['url'] = $val['slug'];
-            
-            if(!empty($val['products'])) {
-                foreach($val['products'] as $k => $v) {
-                    $cat[$k]['label'] = $v['title'];
-                    $cat[$k]['url'] = 'shop/products/'.$v['slug'];
-                    $cat[$k]['enabled'] = true;
-                }
-            }
-            $category[$key]['menu'] = [
-                'type'=>'menu',
-                'items' => $cat
-            ];
-        }
-        
-        $response = [
-            'status' => true,
-            'message' => 'List found',
-            'code' => 200,
-            'data' => $category
-            ];
         $this->response($response);
     }
 
@@ -129,16 +124,20 @@ class WebserviceController extends AppController {
             $user = $this->Auth->identify();
             // echo Router::url('/', true);
             // print_r($user); die;
-            $user['profile_photo'] = Router::url('/', true).str_replace('webroot/','',$user['photo_dir']).$user['profile_photo'];
             if ($user) {
-                $user['token'] = $this->token();
-
+                $user['token'] = json_decode($this->token())->token;
+                $user['profile_photo'] = !empty($user['profile_photo']) ? Router::url('/', true).str_replace('webroot/','',$user['photo_dir']).$user['profile_photo'] : Router::url('/', true).'img/user.png';
+                $user['fcm_Token'] = $this->request->data['fcm_Token'];
                 // print_r($token); die;
                 if ($user['is_verified'] != 1) {
                     $response['message'] = 'Your account is not verified. Please check your email and verify them.';
                 } else if ($user['status'] != 1) {
                     $response['message'] = 'Your account has been deactivated. Please contact ' . $this->ConfigSettings['SYSTEM_APPLICATION_NAME'] . ' Support for assistance';
                 } else {
+                    $resp = $this->Users->find()->where(['id' => $user['id']])->first();
+                    $resp['fcm_Token'] = $this->request->data['fcm_Token'];
+                    // print_r($resp); die;
+                    $this->Users->save($resp);
                     $this->Auth->setUser($user);
                     $response = [
                         'status' => true,
@@ -170,8 +169,14 @@ class WebserviceController extends AppController {
         // print_r($this->request->data); die;
         
         $this->request->data['login_count'] = 0;
-        $this->request->data['is_verified'] = 1;
-        $this->request->data['status'] = 1;
+        
+        if($this->request->data['sex'] == 'male') {
+            $this->request->data['is_verified'] = 1;
+            $this->request->data['status'] = 1;
+        } else {
+            $this->request->data['is_verified'] = 0;
+            $this->request->data['status'] = 0;
+        }
         $this->Users = TableRegistry::get('UserManager.Users');
         $user = $this->Users->newEntity();
         
@@ -208,26 +213,6 @@ class WebserviceController extends AppController {
         $this->response($response);
     }
 
-    public function getcategories() {
-        $categories = $this->Category->find('all', [
-            //'spacer' => '_', 
-            'conditions' => ['status' => 1,'parent_id' => 0],
-            'fields' => ['id' ,'name'=> 'title','title','slug','url'=>'slug','image'],
-            ]);
-        
-        if(!empty($categories->toArray())){
-            $response = [
-                'status' => true,
-                'message' => 'List found',
-                'code' => 200,
-                'data' => $categories->toArray()
-            ];
-        }
-        
-        $this->response($response);
-
-    }
-
     public function enquiry() {
         $response = [
             'staus' => false,
@@ -243,40 +228,6 @@ class WebserviceController extends AppController {
         }
         $this->response($response);
         
-    }
-
-    public function createorder() {
-        $response = [
-            'staus' => false,
-            'message' => 'Order Not created successfully',
-            'code' => 404
-        ];
-        if(!empty($this->request->data) ) {
-            $this->order = TableRegistry::get('Orders');
-            $this->orderdetail = TableRegistry::get('OrderDetails');
-
-            $entity = $this->order->newEntity();
-            $entity->order_no = '1001';
-            $entity->order_amount = isset($this->request->data['price'])?$this->request->data['price']:'';
-            $entity->status = '2';
-            if($this->order->save($entity)) {
-                foreach($this->request->data['detail'] as $k=>$v) {
-                    $details = $this->orderdetail->newEntity();
-                    $details->order_id = $entity->id;
-                    $details->product_name = $v['title'];
-                    $details->product_image = $v['image'];
-                    $details->qty = $v['qty'];
-                    $details->price = $v['price'];
-                    $details->status = '1';
-                    $this->orderdetail->save($details);            
-                }
-                $response = ['status'=>true,'code' => 200 ,'message'=>'You order has been successfully saved.','data' => $entity];
-            } else {
-                pr($entity); die;
-            }
-        }
-        
-        $this->response($response);
     }
 
     public function completeorder() {
@@ -308,17 +259,11 @@ class WebserviceController extends AppController {
         if(!empty($this->request->getData())) {
             $postData = $this->request->getData();
             $userInfo = $this->Users->get($this->Auth->user('id'));
-            // if(!empty($_FILES['profile_photo_file'])) {
-                $fileName =  str_replace(' ','_', $_FILES['profile_photo_file']['name']);
-                $_dir = 'img' . DS . 'uploads' . DS . 'users' . DS;
-                // print_r($_FILES['profile_photo_file']); die;
-                move_uploaded_file($_FILES['profile_photo_file']['tmp_name'],$_dir.$fileName);
-                $postData['profile_photo'] = $fileName;
-                    
-            // }
+            
             $userPatch = $this->Users->patchEntity($userInfo, $postData);
             if($this->Users->save($userPatch)) {
-                $response = ['status'=>true,'code' => 200 ,'message'=>'Profile edit successfully.'];  
+                $userPatch['profile_photo'] = !empty($userPatch['profile_photo']) ? Router::url('/', true).str_replace('webroot/','',$userPatch['photo_dir']).$userPatch['profile_photo'] : Router::url('/', true).'img/user.png';
+                $response = ['status'=>true,'code' => 200 ,'message'=>'Profile edit successfully.','data'=>$userPatch];  
             }
             $this->response($response);
         }
@@ -348,10 +293,62 @@ class WebserviceController extends AppController {
             }
             $response = ['status'=>true,'code' => 200 ,'message'=>'Profile images uploaded successfully.'];
         }
+
+        if(!empty($this->request->getData('videos'))) {
+            $this->UserPhotosTable = TableRegistry::get('UserVideos');
+            foreach ($this->request->getData('videos') as $key => $value) {
+                $userphoto = $this->UserPhotosTable->newEntity();
+                $fileName =  time().str_replace(' ','_', $value['name']);
+                $_dir = 'webroot' . DS . 'img' . DS . 'uploads' . DS . 'users' . DS . 'videos' . DS;
+                if (!file_exists($_dir)) {
+                    mkdir($_dir, 0777, true);
+                }
+                move_uploaded_file($value['tmp_name'],$_dir.$fileName);
+                $userphoto->user_id = $this->Auth->user('id');
+                $userphoto->image = $fileName;
+                $userphoto->status = 'active';
+                $this->UserPhotosTable->save($userphoto);
+            }
+            $response = ['status'=>true,'code' => 200 ,'message'=>'Profile videos uploaded successfully.'];
+        }
         $this->response($response);
     }
 
     public function callinfo()
+    {
+        $response = [
+            'status' => false,
+            'message' => 'detail not saved',
+            'code' => 404
+        ];
+        $postData = $this->request->getData();
+        if(!empty($postData)) {
+            $this->userCallInfo = TableRegistry::get('UserCallInfo');
+            if(!empty($postData['id'])) {
+                $userCallInfo = $this->userCallInfo->find()->where(['id'=>$postData['id']])->first();
+            } else {
+                $userCallInfo = $this->userCallInfo->newEntity();    
+            }
+            $userCallInfo->user_from = $this->Auth->user('id');
+            $userCallInfo->user_to = $postData['user_id'];
+            $userCallInfo->type = $postData['type'];
+            $userCallInfo->start_time = $postData['start_time'];
+            $userCallInfo->end_time = $postData['end_time'];
+            $userCallInfo->status = 'active';
+
+            if($this->userCallInfo->save($userCallInfo)) {
+                $response = [
+                    'status' => true,
+                    'message' => 'Call detail saved successfully',
+                    'code' => 200,
+                    'data' => $userCallInfo
+                ];
+            }    
+        }
+        $this->response($response);
+    }
+
+    public function callinfomongo()
     {
         $response = [
             'status' => false,
@@ -414,6 +411,177 @@ class WebserviceController extends AppController {
         $this->response($response);
     }
 
+    public function planList() {
+        $response = [
+            'status' => false,
+            'message' => 'List not found',
+            'code' => 404
+        ];
+        $this->plan = TableRegistry::get('Plans');
+        $result = $this->plan->find()->where(['status'=>'active'])->toArray();
+        if(!empty($result)) {
+            $response = [
+                'status' => true,
+                'message' => 'List found',
+                'data' => $result,
+                'code' => 200
+            ];
+        }
+        $this->response($response);
+    }
+
+    public function planpurchess() {
+        $response = [
+            'status' => false,
+            'message' => 'payment not saved',
+            'code' => 404
+        ];
+        $postData = $this->request->getData();
+        if(!empty($postData)) {
+            $this->userPlans = TableRegistry::get('userPlans');
+            $userPlans = $this->userPlans->newEntity();
+            $userPlans->user_id = $this->Auth->user('id');
+            $userPlans->plan_id = $postData['plan_id'];
+            $userPlans->amount = $postData['amount'];
+            $userPlans->no_of_coin = $postData['no_of_coin'];
+            $userPlans->status = 'active';
+            $userPlans->created = date('Y-m-d H:i:s');
+            if($this->userPlans->save($userPlans)) {
+                $response = [
+                    'status' => true,
+                    'message' => 'Payment done',
+                    'code' => 200,
+                    'data' => $userPlans
+                ];      
+            }
+        }
+        $this->response($response);
+    }
+
+    public function sendgift() {
+        $response = [
+            'status' => false,
+            'message' => 'gift not send',
+            'code' => 404
+        ];
+        $postData = $this->request->getData();
+        if(!empty($postData)) {
+            $this->userGifts = TableRegistry::get('userGifts');
+            $userGifts = $this->userGifts->newEntity();
+            $userGifts->user_from = $this->Auth->user('id');
+            $userGifts->user_to = $postData['user_id'];
+            $userGifts->gift_id = $postData['gift_id'];
+            $userGifts->coin = $postData['coin'];
+            $userGifts->status = 'active';
+            if($this->userGifts->save($userGifts)) {
+                $response = [
+                    'status' => true,
+                    'message' => 'gift sent',
+                    'code' => 200,
+                    'data' => $userGifts
+                ];      
+            }
+        }
+        $this->response($response);
+    }
+
+    public function couponList()
+    {
+        $response = [
+            'status' => false,
+            'message' => 'List not found',
+            'code' => 404
+        ];
+        $this->coupons = TableRegistry::get('coupons');
+        $coupons = $this->coupons->find()->where(['status'=>'active'])->toArray();
+        if(!empty($coupons)) {
+            $response = [
+                'status' => true,
+                'message' => 'List found',
+                'code' => 200,
+                'data' => $coupons
+            ];
+        }
+        $this->response($response);
+    }
+
+    public function createroom() {
+        $response = [
+            'status' => false,
+            'message' => 'Chat room not created',
+            'code' => 404
+        ];
+        $registration_ids = '';
+        $postData = $this->request->getData();
+        if(!empty($postData)) {
+            $users = $this->Users->find()->select(['fcm_Token'])->where([
+            'id' => $postData['user_id'] , 'fcm_Token !='=>'','status'=>'1'])->hydrate(false)->toArray();
+            if(!empty($users)) {
+                foreach ($users as $key => $value) {
+                    $registration_ids = $value['fcm_Token'];
+                    if($key>0){
+                        $registration_ids .= ','.$value['fcm_Token'];
+                    }
+                }
+            }
+
+            if(!empty($registration_ids)) {
+                require_once "src/RtcTokenBuilder.php";
+                $appID = "56768bcc328145d285d34452dd05b883";
+                $appCertificate = "7eba3dde17dc4798a0e9f23cbe5976b2";
+                $channelName = "dating".rand(1000,100000000);
+                $uid = 2882341273;
+                $uidStr = "2882341273";
+                $role = 0;
+                $expireTimeInSeconds = 3600;
+                $currentTimestamp = (new \DateTime("now", new \DateTimeZone('UTC')))->getTimestamp();
+                $privilegeExpiredTs = $currentTimestamp + $expireTimeInSeconds;
+                
+                $token = \RtcTokenBuilder::buildTokenWithUid($appID, $appCertificate, $channelName, $uid, $role, $privilegeExpiredTs);
+                $title = ucfirst($this->Auth->user('first_name')).' call you';
+                $message = 'Lorem ipsum 123';
+                $fields = array
+                (
+                    'registration_ids'  => [$registration_ids],
+                    'body' => $message,
+                    'title' => $title,
+                    'token' => $token,
+                    'username' => $this->Auth->user('first_name'),
+                    'channelName' => $channelName,
+                    'type' => isset($postData['type'])?$postData['type']:'audio',
+                    'profilePhoto' =>  !empty($this->Auth->user('profile_photo')) ? Router::url('/', true).str_replace('webroot/','',$this->Auth->user('photo_dir')).$this->Auth->user('profile_photo') : Router::url('/', true).'img/user.png'
+                );
+
+                $result = $this->sendPushNotification($fields);
+            
+                if(json_decode($result)->success) {
+                    $response = [
+                        'status' => true,
+                        'message' => 'Chat room created',
+                        'code' => 200,
+                        'token' => $result,
+                        'data' => $fields
+                    ];
+                } else {
+                    $response = [
+                        'status' => false,
+                        'message' => 'Chat room not created',
+                        'code' => 404,
+                        'data' => $result
+                    ];
+                }
+            } else {
+                $response = [
+                    'status' => false,
+                    'message' => 'Device id not found',
+                    'code' => 404
+                ];
+            }
+        }
+        
+        $this->response($response);
+    }
+
     public function token() 
     {
         $user = $this->Auth->identify();
@@ -467,4 +635,82 @@ class WebserviceController extends AppController {
         // $data = $this->UserCallInfo->find()->where(['status'=>'active'])->toArray();
         print_r($result); die;
     }
+
+    function sendPushNotification($fields = array())
+    {
+        $response = [
+            'status' => false,
+            'message' => 'Push notification not send',
+            'code' => 404
+        ];
+        $title = 'Whatever';
+        $message = 'Lorem ipsum';
+            
+        if(empty($fields)) {
+            $fields = array
+            (
+                'registration_ids'  =>['fYXUky_ZQEOv_Sa8gq5h3a:APA91bGOrXXR9Y1pv108K9UEdF9JLpBOdpYC_spRWttr4oP0dAEYJtu4jfZa_WNw28H-_18iBXIU7B2jdTPoTd0Iudh5QViuaiBXVgy4G02_Ep4MR1sLdfYPmK2nMUaEo8JN1tB4eqx4'],
+                // 'data'          => '',
+                'priority' => 'high',
+                'notification' => array(
+                    'body' => $message,
+                    'title' => $title,
+                    'sound' => 'default',
+                    'icon' => 'icon'
+                )
+            );
+        } else {
+            //chanel name, user name , profile photo, type print_r($fields['registration_ids']); die;
+            $fields = array
+            (
+                'registration_ids'  =>  $fields['registration_ids'],  //['fYXUky_ZQEOv_Sa8gq5h3a:APA91bGOrXXR9Y1pv108K9UEdF9JLpBOdpYC_spRWttr4oP0dAEYJtu4jfZa_WNw28H-_18iBXIU7B2jdTPoTd0Iudh5QViuaiBXVgy4G02_Ep4MR1sLdfYPmK2nMUaEo8JN1tB4eqx4'],
+                'data'          => array(
+                                        'username'=>$fields['username'],
+                                        'token' => $fields['token'],
+                                        'profilePhoto' => '',
+                                        'channelName'  => $fields['channelName'],
+                                        'type' => $fields['type'],
+                                        'profilePhoto' => $fields['profilePhoto']
+                                    ),
+                'priority' => 'high',
+                'notification' => array(
+                    'body' => $fields['body'],
+                    'title' => $fields['title'],
+                    'sound' => 'default',
+                    'icon' => 'icon'
+                )
+            );
+        }
+
+        // print_r($fields); die;
+        $API_ACCESS_KEY = 'AAAAwtC853k:APA91bG1CLVNvSJbz9xtfN-N27RXW4UT-T-3ZiRJ7XS-vUIT_Jf1NRTGkyj2UauneXrfzrFWqQL5Dp-ET-SeQuqdpfJfR2Dv5-vXWsSan1uF4G1fRnPFcIcGnjICvOod_VwxnILRwkZz';
+        $headers = array
+        (
+            'Authorization: key=' . $API_ACCESS_KEY,
+            'Content-Type: application/json'
+        );
+        $ch = curl_init();
+        curl_setopt( $ch,CURLOPT_URL, 'https://fcm.googleapis.com/fcm/send' );
+        curl_setopt( $ch,CURLOPT_POST, true );
+        curl_setopt( $ch,CURLOPT_HTTPHEADER, $headers );
+        curl_setopt( $ch,CURLOPT_RETURNTRANSFER, true );
+        curl_setopt( $ch,CURLOPT_SSL_VERIFYPEER, false );
+        curl_setopt( $ch,CURLOPT_POSTFIELDS, json_encode( $fields ) );
+        $result = curl_exec($ch );
+        // print_r($result); die;
+        // $response = [
+        //     'status' => true,
+        //     'message' => 'Push notification sent',
+        //     'data' => $result,
+        //     'code' => 200
+        // ];
+        curl_close( $ch );
+        return $result;
+        // $this->response($response);
+    }
+
+    
+
+    // sendPushNotification($fields);
+
 }

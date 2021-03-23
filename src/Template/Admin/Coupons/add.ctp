@@ -31,7 +31,7 @@
                 echo $this->Form->control('name',['class' => 'form-control', 'placeholder' => __('Name')]);
                 echo $this->Form->control('code',['class' => 'form-control', 'placeholder' => __('Code')]);
                 echo $this->Form->control('type',['options'=>["percentage" => "Percentage", "fixed" => "Fixed"],'class' => 'form-control', 'placeholder' => __('Type')]);
-                echo $this->Form->control('no_of_coin',['label'=>'Coin','class' => 'form-control', 'placeholder' => __('Coin')]);
+                echo $this->Form->control('no_of_coin',['label'=>'Value','class' => 'form-control', 'placeholder' => __('Value')]);
             echo $this->Form->control('status',['options'=>[1 => "Active", 0 => "Inactive"],'class' => 'form-control']);
         ?>
 </div>

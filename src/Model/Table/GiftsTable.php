@@ -9,25 +9,25 @@ use Cake\Validation\Validator;
 /**
  * Gifts Model
  *
+ * @property |\Cake\ORM\Association\HasMany $UserGifts
+ *
  * @method \App\Model\Entity\Gift get($primaryKey, $options = [])
  * @method \App\Model\Entity\Gift newEntity($data = null, array $options = [])
  * @method \App\Model\Entity\Gift[] newEntities(array $data, array $options = [])
  * @method \App\Model\Entity\Gift|bool save(\Cake\Datasource\EntityInterface $entity, $options = [])
- * @method \App\Model\Entity\Gift|bool saveOrFail(\Cake\Datasource\EntityInterface $entity, $options = [])
+ * @method \App\Model\Entity\Gift saveOrFail(\Cake\Datasource\EntityInterface $entity, $options = [])
  * @method \App\Model\Entity\Gift patchEntity(\Cake\Datasource\EntityInterface $entity, array $data, array $options = [])
  * @method \App\Model\Entity\Gift[] patchEntities($entities, array $data, array $options = [])
  * @method \App\Model\Entity\Gift findOrCreate($search, callable $callback = null, $options = [])
  */
 class GiftsTable extends Table
 {
-
     /**
      * Initialize method
      *
      * @param array $config The configuration for the Table.
      * @return void
      */
-    public $_dir;
     public function initialize(array $config)
     {
         parent::initialize($config);
@@ -35,6 +35,11 @@ class GiftsTable extends Table
         $this->setTable('gifts');
         $this->setDisplayField('name');
         $this->setPrimaryKey('id');
+
+        $this->hasMany('UserGifts', [
+            'foreignKey' => 'gift_id'
+        ]);
+
         $this->addBehavior('Upload', [
             'fields' => [
                 'image' => [
@@ -61,18 +66,18 @@ class GiftsTable extends Table
             ->scalar('name')
             ->maxLength('name', 255)
             ->requirePresence('name', 'create')
-            ->notEmpty('name');
+            ->allowEmpty('name', false);
 
         // $validator
         //     ->scalar('image')
         //     ->maxLength('image', 255)
         //     ->requirePresence('image', 'create')
-        //     ->notEmpty('image');
+        //     ->allowEmpty('image', false);
 
         $validator
             ->integer('coin')
             ->requirePresence('coin', 'create')
-            ->notEmpty('coin');
+            ->allowEmpty('coin', false);
 
         $validator
             ->scalar('status')

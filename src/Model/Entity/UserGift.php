@@ -4,15 +4,19 @@ namespace App\Model\Entity;
 use Cake\ORM\Entity;
 
 /**
- * Gift Entity
+ * UserGift Entity
  *
  * @property int $id
- * @property string $name
- * @property string $image
- * @property int $coin
+ * @property int $user_from
+ * @property int|null $user_to
+ * @property int $gift_id
+ * @property int|null $coin
  * @property string|null $status
+ *
+ * @property \App\Model\Entity\User $user
+ * @property \App\Model\Entity\Gift $gift
  */
-class Gift extends Entity
+class UserGift extends Entity
 {
     /**
      * Fields that can be mass assigned using newEntity() or patchEntity().
@@ -24,10 +28,12 @@ class Gift extends Entity
      * @var array
      */
     protected $_accessible = [
-        'name' => true,
-        'image' => true,
-        'image_file' => true,
+        'user_from' => true,
+        'user_to' => true,
+        'gift_id' => true,
         'coin' => true,
-        'status' => true
+        'status' => true,
+        'user' => true,
+        'gift' => true
     ];
 }

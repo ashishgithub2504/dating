@@ -375,3 +375,11 @@ function deleteimage(sort, imagename){
     });
 }
 
+
+// var client = AgoraRTC.createClient({mode: 'live', codec: "h264"});
+
+// client.init('56768bcc328145d285d34452dd05b883', function () {
+//   console.log("AgoraRTC client initialized");
+// }, function (err) {
+//   console.log("AgoraRTC client init failed", err);
+// });

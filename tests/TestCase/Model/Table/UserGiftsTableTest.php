@@ -1,21 +1,21 @@
 <?php
 namespace App\Test\TestCase\Model\Table;
 
-use App\Model\Table\GiftsTable;
+use App\Model\Table\UserGiftsTable;
 use Cake\ORM\TableRegistry;
 use Cake\TestSuite\TestCase;
 
 /**
- * App\Model\Table\GiftsTable Test Case
+ * App\Model\Table\UserGiftsTable Test Case
  */
-class GiftsTableTest extends TestCase
+class UserGiftsTableTest extends TestCase
 {
     /**
      * Test subject
      *
-     * @var \App\Model\Table\GiftsTable
+     * @var \App\Model\Table\UserGiftsTable
      */
-    public $Gifts;
+    public $UserGifts;
 
     /**
      * Fixtures
@@ -23,6 +23,8 @@ class GiftsTableTest extends TestCase
      * @var array
      */
     public $fixtures = [
+        'app.UserGifts',
+        'app.Users',
         'app.Gifts'
     ];
 
@@ -34,8 +36,8 @@ class GiftsTableTest extends TestCase
     public function setUp()
     {
         parent::setUp();
-        $config = TableRegistry::getTableLocator()->exists('Gifts') ? [] : ['className' => GiftsTable::class];
-        $this->Gifts = TableRegistry::getTableLocator()->get('Gifts', $config);
+        $config = TableRegistry::getTableLocator()->exists('UserGifts') ? [] : ['className' => UserGiftsTable::class];
+        $this->UserGifts = TableRegistry::getTableLocator()->get('UserGifts', $config);
     }
 
     /**
@@ -45,7 +47,7 @@ class GiftsTableTest extends TestCase
      */
     public function tearDown()
     {
-        unset($this->Gifts);
+        unset($this->UserGifts);
 
         parent::tearDown();
     }
@@ -66,6 +68,16 @@ class GiftsTableTest extends TestCase
      * @return void
      */
     public function testValidationDefault()
+    {
+        $this->markTestIncomplete('Not implemented yet.');
+    }
+
+    /**
+     * Test buildRules method
+     *
+     * @return void
+     */
+    public function testBuildRules()
     {
         $this->markTestIncomplete('Not implemented yet.');
     }

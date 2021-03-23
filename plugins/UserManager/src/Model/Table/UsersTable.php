@@ -61,8 +61,8 @@ class UsersTable extends Table
         $this->hasMany('UserVideos', [
             'foreignKey' => 'user_id',
         ]);
-        $this->hasMany('userGifts', [
-            'foreignKey' => 'user_id',
+        $this->hasMany('UserGifts', [
+            'foreignKey' => 'user_from'
         ]);
         $this->belongsToMany('AccountTypes', [
             'foreignKey' => 'user_id',

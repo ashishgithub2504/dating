@@ -185,7 +185,7 @@ class AppController extends Controller
                         'key' => 'Auth.Admin',
                     ],
                 ]);
-                $this->Auth->allow(['signup', 'forgot', 'login', 'passwordreset', 'verifyaccount','index','staticpage','getcategories','getproducts']);
+                $this->Auth->allow(['signup', 'forgot', 'login', 'passwordreset', 'verifyaccount','index','staticpage','getcategories','getproducts','sendPushNotification']);
                 break;
         }
         
@@ -193,7 +193,6 @@ class AppController extends Controller
     
     public function beforeFilter(Event $event)
     {
-        
         $this->ConfigSettings = Configure::read('Setting');
         if($this->request->getSession()->read('Auth.Admin')){
             //EventManager::instance()->on(new RequestMetadata($this->request, ['id' => $this->Auth->user('id')]));
@@ -242,6 +241,7 @@ class AppController extends Controller
                     'productCount' => '0',
                 ]);
             }
+            $this->RequestHandler->renderAs($this, 'json');
         }
     }
 
