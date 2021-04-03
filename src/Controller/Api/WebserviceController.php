@@ -26,7 +26,7 @@ class WebserviceController extends AppController {
         $this->Users = TableRegistry::get('UserManager.Users');
         $this->Products = TableRegistry::get('CatalogManager.Products');
         $this->Category = TableRegistry::get('Categories');
-        
+        $this->userPlans = TableRegistry::get('userPlans');
     }
 
     /**
@@ -40,12 +40,11 @@ class WebserviceController extends AppController {
             'message' => 'List Not found',
             'code' => 404
         ];
-        $users = $this->Category->find()->contain(['users'])->where(['status'=>'1'])->toArray();
-        $this->userPlans = TableRegistry::get('userPlans');
-
-        $Details = $this->userPlans->find();
-        $Details = $Details->where(['status' => 'active']);
-        $sumOftotal_coin =  $Details->sumOf('no_of_coin');
+        $users = $this->Category->find()
+                ->contain(['users'=>function($q) {
+                    return $q->where(['Users.id !=' => $this->Auth->user('id')]);
+                }])->where(['status'=>'1'])->toArray();
+        
         $Gifts = TableRegistry::get('Gifts')->find()->where(['status'=>'active'])->toArray();
         // print_r($Gifts); die;
         if(!empty($Gifts)) {
@@ -54,18 +53,25 @@ class WebserviceController extends AppController {
             }
         }
         // print_r($sumOftotal_downtime); die;
-        $this->userPlans->find()->where(['status'=>'active']);
+        // $this->userPlans->find()->where(['status'=>'active']);
         $response = [
             'status' => true,
             'message' => 'List found',
             'code' => 200,
             'data' => [
                 'categories' => $users,
-                'total_coin' => $sumOftotal_coin,
+                'total_coin' => $this->totalCoin(),
                 'Gifts' => !empty($Gifts)?$Gifts:[]
             ]
         ];
         $this->response($response);
+    }
+
+    private function totalCoin($user_id = '') {
+        $userId = !empty($user_id) ? $user_id : $this->Auth->user('id');
+        $Details = $this->userPlans->find();
+        $Details = $Details->where(['status' => 'active', 'user_id' => $userId ]);
+        return $Details->sumOf('no_of_coin');
     }
 
     public function profileView() {
@@ -184,6 +190,8 @@ class WebserviceController extends AppController {
         
         if ($this->Users->save($user)) {
             $userInfo = $this->_loginresponse($user->id);
+            $userInfo['profile_photo'] = !empty($userInfo['profile_photo']) ? Router::url('/', true).str_replace('webroot/','',$userInfo['photo_dir']).$userInfo['profile_photo'] : Router::url('/', true).'img/user.png';
+            
             $response = ['status'=>true,'code' => 200 ,'message'=>'You have successfully registred','data' => $userInfo];
         }else{
              $response['data'] = $user->errors();
@@ -337,6 +345,9 @@ class WebserviceController extends AppController {
             $userCallInfo->status = 'active';
 
             if($this->userCallInfo->save($userCallInfo)) {
+
+                $userCallInfo['total_coin'] = $this->totalCoin($this->Auth->user('id'));
+                    
                 $response = [
                     'status' => true,
                     'message' => 'Call detail saved successfully',
@@ -524,12 +535,11 @@ class WebserviceController extends AppController {
                     }
                 }
             }
-
             if(!empty($registration_ids)) {
-                require_once "src/RtcTokenBuilder.php";
-                $appID = "56768bcc328145d285d34452dd05b883";
-                $appCertificate = "7eba3dde17dc4798a0e9f23cbe5976b2";
-                $channelName = "dating".rand(1000,100000000);
+                require_once "src/RtmTokenBuilder.php";
+                $appID = "393bfd2cbde84eab968cff81028bd794";
+                $appCertificate = "db997ba5c40d4894942627aea949f2e7";
+                $channelName = "justu".rand(1000,100000000);
                 $uid = 2882341273;
                 $uidStr = "2882341273";
                 $role = 0;
@@ -537,11 +547,12 @@ class WebserviceController extends AppController {
                 $currentTimestamp = (new \DateTime("now", new \DateTimeZone('UTC')))->getTimestamp();
                 $privilegeExpiredTs = $currentTimestamp + $expireTimeInSeconds;
                 
-                $token = \RtcTokenBuilder::buildTokenWithUid($appID, $appCertificate, $channelName, $uid, $role, $privilegeExpiredTs);
+                $token = \RtmTokenBuilder::buildToken($appID, $appCertificate, $channelName, $uid, $role, $privilegeExpiredTs);
                 $title = ucfirst($this->Auth->user('first_name')).' call you';
                 $message = 'Lorem ipsum 123';
                 $fields = array
                 (
+                    'total_coin' => $this->totalCoin($postData['user_id']),
                     'registration_ids'  => [$registration_ids],
                     'body' => $message,
                     'title' => $title,
@@ -551,7 +562,7 @@ class WebserviceController extends AppController {
                     'type' => isset($postData['type'])?$postData['type']:'audio',
                     'profilePhoto' =>  !empty($this->Auth->user('profile_photo')) ? Router::url('/', true).str_replace('webroot/','',$this->Auth->user('photo_dir')).$this->Auth->user('profile_photo') : Router::url('/', true).'img/user.png'
                 );
-
+                // print_r($fields); die;
                 $result = $this->sendPushNotification($fields);
             
                 if(json_decode($result)->success) {
@@ -567,7 +578,7 @@ class WebserviceController extends AppController {
                         'status' => false,
                         'message' => 'Chat room not created',
                         'code' => 404,
-                        'data' => $result
+                        'data' => $fields
                     ];
                 }
             } else {
@@ -579,6 +590,25 @@ class WebserviceController extends AppController {
             }
         }
         
+        $this->response($response);
+    }
+
+    public function audiocall() {
+        $response = [
+            'status' => false,
+            'message' => 'Data Not found',
+            'code' => 404
+        ];
+        $postData = $this->request->getData();
+        if(!empty($postData)) {
+            $response = [
+                'status' => true,
+                'message' => 'Data found',
+                'code' => 200,
+                'data' => $postData
+            ];  
+        }
+
         $this->response($response);
     }
 
