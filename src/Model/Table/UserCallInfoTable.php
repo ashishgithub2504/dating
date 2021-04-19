@@ -26,14 +26,20 @@ class UserCallInfoTable extends Table
      * @param array $config The configuration for the Table.
      * @return void
      */
-    // public function initialize(array $config)
-    // {
-    //     parent::initialize($config);
+    public function initialize(array $config)
+    {
+        // parent::initialize($config);
 
-    //     $this->setTable('user_call_info');
-    //     $this->setDisplayField('id');
-    //     $this->setPrimaryKey('id');
-    // }
+        // $this->setTable('user_call_info');
+        // $this->setDisplayField('id');
+        // $this->setPrimaryKey('id');
+
+        $this->belongsTo('Users', [
+            'foreignKey' => 'user_to',
+            'joinType' => 'INNER'
+        ]);
+
+    }
 
     /**
      * Default validation rules.

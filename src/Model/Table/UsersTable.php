@@ -64,6 +64,7 @@ class UsersTable extends Table
             'targetForeignKey' => 'account_type_id',
             'joinTable' => 'users_account_types'
         ]);
+
     }
 
     /**

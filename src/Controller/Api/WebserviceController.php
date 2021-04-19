@@ -40,7 +40,7 @@ class WebserviceController extends AppController {
             'message' => 'List Not found',
             'code' => 404
         ];
-        $users = $this->Category->find()
+        $cats = $this->Category->find()
                 ->contain(['users'=>function($q) {
                     return $q->where(['Users.id !=' => $this->Auth->user('id')]);
                 }])->where(['status'=>'1'])->toArray();
@@ -52,6 +52,14 @@ class WebserviceController extends AppController {
                 $Gifts[$key]['image'] = Router::url('/', true).'img' . DS . 'uploads' . DS . 'gifts' . DS.$value['image'];
             }
         }
+
+        if(!empty($cats)) {
+            foreach ($cats as $key => $users) {
+                foreach ($users['users'] as $k => $value) {
+                    $cats[$key]['users'][$k]['profile_photo'] = !empty($value['profile_photo']) ? Router::url('/', true).str_replace('webroot/','',$value['photo_dir']).$value['profile_photo'] : Router::url('/', true).'img/user.png';
+                }
+            }
+        }
         // print_r($sumOftotal_downtime); die;
         // $this->userPlans->find()->where(['status'=>'active']);
         $response = [
@@ -59,7 +67,7 @@ class WebserviceController extends AppController {
             'message' => 'List found',
             'code' => 200,
             'data' => [
-                'categories' => $users,
+                'categories' => $cats,
                 'total_coin' => $this->totalCoin(),
                 'Gifts' => !empty($Gifts)?$Gifts:[]
             ]
@@ -145,6 +153,7 @@ class WebserviceController extends AppController {
                     // print_r($resp); die;
                     $this->Users->save($resp);
                     $this->Auth->setUser($user);
+                    $user['total_coin'] = $this->totalCoin();
                     $response = [
                         'status' => true,
                         'code' => 200,
@@ -191,7 +200,8 @@ class WebserviceController extends AppController {
         if ($this->Users->save($user)) {
             $userInfo = $this->_loginresponse($user->id);
             $userInfo['profile_photo'] = !empty($userInfo['profile_photo']) ? Router::url('/', true).str_replace('webroot/','',$userInfo['photo_dir']).$userInfo['profile_photo'] : Router::url('/', true).'img/user.png';
-            
+            $userInfo['token'] = json_decode($this->token($user->id))->token;
+            $userInfo['total_coin'] = $this->totalCoin($user->id);
             $response = ['status'=>true,'code' => 200 ,'message'=>'You have successfully registred','data' => $userInfo];
         }else{
              $response['data'] = $user->errors();
@@ -267,8 +277,8 @@ class WebserviceController extends AppController {
         if(!empty($this->request->getData())) {
             $postData = $this->request->getData();
             $userInfo = $this->Users->get($this->Auth->user('id'));
-            
             $userPatch = $this->Users->patchEntity($userInfo, $postData);
+
             if($this->Users->save($userPatch)) {
                 $userPatch['profile_photo'] = !empty($userPatch['profile_photo']) ? Router::url('/', true).str_replace('webroot/','',$userPatch['photo_dir']).$userPatch['profile_photo'] : Router::url('/', true).'img/user.png';
                 $response = ['status'=>true,'code' => 200 ,'message'=>'Profile edit successfully.','data'=>$userPatch];  
@@ -612,7 +622,216 @@ class WebserviceController extends AppController {
         $this->response($response);
     }
 
-    public function token() 
+    public function createbroadcast()
+    {
+        $this->Broadcasts = TableRegistry::get('Broadcasts');
+        $response = [
+            'status' => false,
+            'message' => 'Broadcast not start',
+            'code' => 404
+        ]; 
+        require_once "src/RtmTokenBuilder.php";
+        $appID = Configure::read('APPID');
+        $appCertificate = Configure::read('APPCertificate');
+        $channelName = "broad".rand(1000,100000000);
+        $uid = 2882341273;
+        $uidStr = "2882341273";
+        $role = 0;
+        $expireTimeInSeconds = 3600;
+        $currentTimestamp = (new \DateTime("now", new \DateTimeZone('UTC')))->getTimestamp();
+        $privilegeExpiredTs = $currentTimestamp + $expireTimeInSeconds;
+        
+        $token = \RtmTokenBuilder::buildToken($appID, $appCertificate, $channelName, $uid, $role, $privilegeExpiredTs);
+        if(!empty($token)) {
+            $broadcasts = $this->Broadcasts->newEntity();
+            $broadcasts->user_id = $this->Auth->user('id');
+            $broadcasts->type = 'video';
+            $broadcasts->channel_name = $channelName;
+            $broadcasts->token = $token;
+            $broadcasts->status = 'active';
+            if ($this->Broadcasts->save($broadcasts)) {
+                $response = [
+                    'status' => true,
+                    'message' => 'Broadcast started',
+                    'code' => 200,
+                    'data' => [
+                        'token' => $token,
+                        'channelName' => $channelName
+                    ]
+                ];
+            }
+            
+        }
+        $this->response($response);
+    }
+
+    public function listingbroadcast() 
+    {
+        $response = [
+            'status' => false,
+            'message' => 'Broadcast List not found',
+            'code' => 404
+        ];
+        $this->Broadcasts = TableRegistry::get('Broadcasts');
+        $result =  $this->Broadcasts->find()
+                        ->contain(['Users'=>function($q) {
+                            return $q->select([
+                                    'first_name'=>'first_name',
+                                    'last_name'=>'last_name',
+                                    'profile_photo'=>'profile_photo',
+                                    'photo_dir' => 'photo_dir'
+                                ]);
+                        }])
+                        ->where(['Broadcasts.status' => 'active'])->toArray();
+        if(!empty($result)) {
+            foreach ($result as $key => $value) {
+                $result[$key]['profile_photo'] = !empty($value['profile_photo']) ? Router::url('/', true).str_replace('webroot/','',$value['photo_dir']).$value['profile_photo'] : Router::url('/', true).'img/user.png';
+            }
+            $response = [
+                'status' => true,
+                'message' => 'Broadcast List found',
+                'code' => 200,
+                'data' => $result
+            ];  
+        }
+        $this->response($response);
+    }
+
+    public function joinbroadcast() {
+        $response = [
+            'status' => false,
+            'message' => 'Broadcast not join',
+            'code' => 404
+        ];
+        $this->BroadcastJoins = TableRegistry::get('BroadcastJoins');
+        if(!empty($this->request->getData())) {
+
+            $postData = $this->request->getData();
+            $query = $this->BroadcastJoins->query();
+            $datainsert = $query->insert(['broadcast_id','user_id','status'])
+                ->values([
+                    'broadcast_id' => $postData['broadcast_id'],
+                    'user_id' => $this->Auth->user('id'),
+                    'status' => $postData['status']
+                ])
+                ->execute();
+            if($datainsert->rowCount()) {
+                $response = [
+                    'status' => true,
+                    'message' => 'Broadcast joined',
+                    'code' => 200,
+                    'data' => [
+                        'broadcast_id' => $postData['broadcast_id'],
+                        'user_id' => $this->Auth->user('id'),
+                        'status' => $postData['status']
+                    ]
+                ];
+            }
+        }
+        $this->response($response);   
+    }
+
+    public function followfollwing()
+    {
+        $this->Followers = TableRegistry::get('Followers');
+
+        $response = [
+            'status' => true,
+            'message' => 'Data found',
+            'code' => 200,
+            'data' => [
+                'following' => $this->Followers->find()->where(['follow_from' => $this->Auth->user('id')])->count(),
+                'followers' => $this->Followers->find()->where(['follow_to' => $this->Auth->user('id')])->count()
+            ]
+        ];
+        $this->response($response);   
+    }
+
+    public function savechat() 
+    {
+        $response = [
+            'status' => false,
+            'message' => 'Chat not save',
+            'code' => 404
+        ];
+
+        if(!empty($this->request->getData())) {
+            $postData = $this->request->getData();
+            $_dir = 'webroot' . DS . 'img' . DS . 'uploads' . DS . 'chats' . DS . 'images' . DS;
+                
+            if(!empty($_FILES)) {
+                $fileName =  time().str_replace(' ','_', $_FILES['message']['name']);
+                if (!file_exists($_dir)) {
+                    mkdir($_dir, 0777, true);
+                }
+                move_uploaded_file($_FILES['message']['tmp_name'],$_dir.$fileName);
+                $postData['message'] = $fileName;
+                $postData['type'] = 'image'; 
+            } else {
+                $postData['type'] = 'text';
+            }
+
+            $this->Chats = TableRegistry::get('Chats');
+            $obj = $this->Chats->newEntity();
+            $obj->chat_to = $this->Auth->user('id');
+            $obj->type = $postData['type'];
+            $obj->chat_from = $postData['user_id'];
+            $obj->message = $postData['message'];
+            $obj->is_read = '0';
+            $obj->status = '1';
+            if($this->Chats->save($obj)) {
+                $obj->path = Router::url('/', true).$_dir;
+                $response = [
+                    'status' => true,
+                    'message' => 'Chat saved',
+                    'code' => 200,
+                    'data' => $obj
+                ];
+            }
+        }
+        $this->response($response);
+    }
+
+    public function chatList() 
+    {
+        $response = [
+            'status' => false,
+            'message' => 'Chat list not found',
+            'code' => 404
+        ];
+        $this->Chats = TableRegistry::get('Chats');
+        $chatList = $this->Chats->find()
+                    ->where(['chat_to'=>$this->Auth->user('id')])
+                    ->orWhere(['chat_from'=>$this->Auth->user('id')])
+                    ->contain(['users'  => function($q) {
+                        return $q->select(['first_name'=>'first_name','last_name'=>'last_name','email'=>'email','profile_photo'=>'profile_photo','photo_dir'=>'photo_dir']);
+                    }])
+                    ->group(['chat_from'])
+                    ->order(['Chats.id'=>'desc'])
+                    ->hydrate(false)->toArray();
+        // print_r($chatList);die;
+        if(!empty($chatList)) {
+            foreach ($chatList as $key => $value) {
+                $chatList[$key]['profile_photo'] = !empty($value['profile_photo']) ? Router::url('/', true).$value['photo_dir'].$value['profile_photo']: Router::url('/', true).'img/user.png';
+            }
+            $response = [
+                'status' => true,
+                'message' => 'Chat list found',
+                'code' => 200,
+                'data' => $chatList
+            ];            
+        }
+        $this->response($response);
+    }
+
+    public function logout() 
+    {
+        $this->Auth->logout();
+        $this->request->session()->destroy();
+        echo "string"; die;
+    }
+
+    public function token($user_id = '') 
     {
         $user = $this->Auth->identify();
         if (!$user) {
@@ -621,7 +840,7 @@ class WebserviceController extends AppController {
         return json_encode([
             // 'success' => true,
                 'token' => JWT::encode([
-                    'sub' => $user['id'],
+                    'sub' => !empty($user_id) ? $user_id : $user['id'],
                     'exp' =>  time() + 604800
                 ],
                 Security::salt())

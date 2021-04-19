@@ -93,6 +93,8 @@ try {
  * When debug = true the metadata cache should only last
  * for a short time.
  */
+Configure::write('APPID', '393bfd2cbde84eab968cff81028bd794');
+Configure::write('APPCertificate', 'db997ba5c40d4894942627aea949f2e7');
 if (Configure::read('debug')) {
     Configure::write('Cache._cake_model_.duration', '+2 minutes');
     Configure::write('Cache._cake_core_.duration', '+2 minutes');
@@ -221,4 +223,4 @@ Plugin::load('ContactManager', ['bootstrap' => false, 'routes' => true]);
 Plugin::load('ADmad/JwtAuth');
 // Plugin::load('Hayko/Mongodb');
 // Plugin::load('mongodb',['bootstrap'=>false,'routes' => true]);
-Plugin::load('CakeMonga');
+// Plugin::load('CakeMonga');

@@ -64,6 +64,11 @@ class UsersTable extends Table
         $this->hasMany('UserGifts', [
             'foreignKey' => 'user_from'
         ]);
+
+        $this->hasMany('Chats', [
+            'foreignKey' => 'chat_from'
+        ]);
+        
         $this->belongsToMany('AccountTypes', [
             'foreignKey' => 'user_id',
             'targetForeignKey' => 'account_type_id',
@@ -131,7 +136,7 @@ class UsersTable extends Table
         $validator
             ->scalar('mobile')
             ->maxLength('mobile', 20)
-            ->add('mobile','unique',['rule' => 'validateUnique','provider'=>'table','message'=>'You already have registered with us.'])
+            //->add('mobile','unique',['rule' => 'validateUnique','provider'=>'table','message'=>'You already have registered with us.'])
             ->allowEmpty('mobile');
 
         $validator

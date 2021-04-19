@@ -12,6 +12,7 @@
     </h1>
     <?= $this->element('breadcrumb') ?>
 </section>
+
 <section class="content" data-table="users"> 
 
     <?= $this->Form->create(null, ['role' => 'form', 'enctype' => 'multipart/form-data', 'type' => 'get','valueSources' => ['query', 'context']]) ?>
@@ -164,7 +165,8 @@
                                         </td>
                                         <td class="actions">
                                             <div class="form-group">
-                                                <?= $this->Html->link("<i class=\"fa fa-fw fa-eye\"></i>", ['action' => 'view', $user->id], ['class' => 'btn btn-warning btn-sm btn-flat', 'escape' => false, 'data-toggle' => 'tooltip', 'alt' => __('View user'), 'title' => __('View user')]) ?>
+                                                <?= $this->Html->link("<i class=\"fa fa-video-camera\"></i>", ['action' => 'call', $user->id], ['class' => 'btn btn-warning btn-sm btn-flat', 'escape' => false, 'data-toggle' => 'tooltip', 'alt' => __('View user Call History'), 'title' => __('View User Call History')]) ?>
+                                                <?= $this->Html->link("<i class=\"fa fa-google-wallet\"></i>", ['action' => 'wallet', $user->id], ['class' => 'btn btn-info btn-sm btn-flat', 'escape' => false, 'data-toggle' => 'tooltip', 'alt' => __('View user Wallet History'), 'title' => __('View User Wallet History')]) ?>
                                                 <?= $this->Html->link("<i class=\"fa fa-edit\"></i>", ['action' => 'add', $user->id], ['class' => 'btn btn-primary btn-sm btn-flat', 'escape' => false, 'data-toggle' => 'tooltip', 'alt' => __('Edit user'), 'title' => __('Edit user')]) ?> 
                                                 <?= $this->Form->postLink("<i class=\"fa fa-trash\"></i>", ['action' => 'delete', $user->id], ['onClick' => 'confirmDelete(this, \'' . $user->name . '\')', 'class' => 'btn btn-danger btn-sm btn-flat', 'data-toggle' => 'tooltip', 'escape' => false, 'alt' => __('Delete user'), 'title' => __('Delete user')]) ?>
                                             </div>

@@ -28,12 +28,14 @@ class UsersController extends AppController
     public function index()
     {
 		$query = $this->Users->find();
-		$query->contain(['AccountTypes']);
+		// $query->contain(['AccountTypes']);
 		$query->find('filter', $this->request->getQuery())->find('withInDate', $this->request->getQuery());
+        $options['contain'] = ['AccountTypes','userPhotos'];
         $options['order'] = ['Users.id' => 'DESC'];
         $options['limit'] = $this->ConfigSettings['ADMIN_PAGE_LIMIT'];
         $this->paginate = $options;
 		$users = $this->paginate($query);
+        // pr($users); die;
 		$accountTypes = $this->Users->AccountTypes->find('list', ['limit' => 200]);
 		$this->set(compact('users','accountTypes'));
         $this->set('_serialize', ['users']);
@@ -174,6 +176,47 @@ class UsersController extends AppController
         }
         
     }
+
+    public function call($user_id)
+    {
+        $this->userCallInfo = TableRegistry::get('UserCallInfo');
+        $callInfo =  $this->userCallInfo->find()
+                    ->select([
+                        'UserCallInfo.user_from',
+                        'UserCallInfo.user_to',
+                        'UserCallInfo.type',
+                        'UserCallInfo.start_time',
+                        'UserCallInfo.end_time',
+                        'UserCallInfo.status',
+                        'Users.username'
+                    ])
+                    ->join([
+                        'Users' => [
+                            'table' => 'users',
+                            'type' => 'LEFT',
+                            'conditions' => 'Users.id = UserCallInfo.user_to'
+                        ]
+                    ])
+                    ->where(['user_from' => $user_id,'UserCallInfo.status'=>'active'])
+                    ->hydrate(false)
+                    ->toArray();
+
+        $this->set(compact('callInfo'));
+        $this->set('_serialize', ['callInfo']);
+    }
 	
+    public function wallet($user_id =  null)
+    {
+        $this->userPlan = TableRegistry::get('UserPlans');
+        $userPlan = $this->userPlan->find()
+                    ->contain(['Plans'])
+                    ->where([
+                        'UserPlans.status'=>'active',
+                        'UserPlans.user_id' => $user_id])
+                    ->hydrate(false)->toArray();
+        // pr($userPlan); die;
+        $this->set(compact('userPlan'));
+        $this->set('_serialize', ['userPlan']);
+    }
 	
 }
