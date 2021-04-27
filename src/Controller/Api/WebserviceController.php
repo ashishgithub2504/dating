@@ -60,8 +60,7 @@ class WebserviceController extends AppController {
                 }
             }
         }
-        // print_r($sumOftotal_downtime); die;
-        // $this->userPlans->find()->where(['status'=>'active']);
+        
         $response = [
             'status' => true,
             'message' => 'List found',
@@ -73,6 +72,31 @@ class WebserviceController extends AppController {
             ]
         ];
         $this->response($response);
+    }
+
+    public function hostListing() {
+        if(!empty($this->request->getData())) {
+            $postData = $this->request->getData();
+            $limit = isset($postData['limit'])?$postData['limit']:10;
+            $page = $postData['page'];
+        }
+        $query = $this->Users->find()->where(['status'=>'1','is_verified' => '1'])->hydrate(false);
+        $this->paginate = array(
+            'limit' => $limit,
+            'page' => $page
+        );
+        $result = $this->paginate($query)->toArray();
+        foreach ($result as $k => $value) {
+            $result[$k]['profile_photo'] = !empty($value['profile_photo']) ? Router::url('/', true).str_replace('webroot/','',$value['photo_dir']).$value['profile_photo'] : Router::url('/', true).'img/user.png';
+        }
+        $response = [
+            'status' => true,
+            'message' => 'List found',
+            'code' => 200,
+            'data' => $result
+        ];
+        $this->response($response);
+        
     }
 
     private function totalCoin($user_id = '') {
@@ -101,6 +125,32 @@ class WebserviceController extends AppController {
                                 'id'=> !empty($this->request->getData('user_id')) ? $this->request->getData('user_id') : $this->Auth->user('id')
                             ])
                             ->first();
+
+            $this->userGifts = TableRegistry::get('userGifts');
+            
+            $query = $this->userGifts->find();
+            $userGifts = $query
+                        ->select([
+                            'RN_sum' => $query->func()->sum('userGifts.coin'),
+                            'RN_count' => $query->func()->count('userGifts.coin'),
+                            'gift_id','Gifts.name'])
+                        ->contain(['Gifts'])
+                        ->where([
+                            'userGifts.status'=>'active',
+                            'userGifts.user_to'=> !empty($this->request->getData('user_id')) ? $this->request->getData('user_id') : $this->Auth->user('id')
+                            ])
+                        ->hydrate(false)
+                        ->group(['userGifts.gift_id'])
+                        ->toArray();
+            $userDetails['user_gifts'] = [];
+            if(!empty($userGifts)) {
+                foreach ($userGifts as $key => $value) {
+                    $userDetails['user_gifts'][$key]['sum'] = $value['RN_sum'];
+                    $userDetails['user_gifts'][$key]['count'] = $value['RN_count'];
+                    $userDetails['user_gifts'][$key]['gift'] = $value['gift']['name'];
+                }
+                // print_r($userDetails); die;
+            }
             $userDetails['profile_photo'] = !empty($userDetails['profile_photo']) ? Router::url('/', true).str_replace('webroot/','',$userDetails['photo_dir']).$userDetails['profile_photo'] : Router::url('/', true).'img/user.png';
             
             if(!empty($userDetails['user_photos'])) {
@@ -466,7 +516,7 @@ class WebserviceController extends AppController {
             $userPlans->amount = $postData['amount'];
             $userPlans->no_of_coin = $postData['no_of_coin'];
             $userPlans->status = 'active';
-            $userPlans->created = date('Y-m-d H:i:s');
+            $userPlans->created = isset($postData['created'])?$postData['created']:time();
             if($this->userPlans->save($userPlans)) {
                 $response = [
                     'status' => true,
@@ -757,6 +807,23 @@ class WebserviceController extends AppController {
 
         if(!empty($this->request->getData())) {
             $postData = $this->request->getData();
+            $this->Conversations = TableRegistry::get('Conversations');
+            $conversation = $this->Conversations->find()->where(['OR'=>[[
+                    'conversation_to' => $this->Auth->user('id'), 
+                    'conversation_from' => $postData['user_id']
+                ] , [
+                    'conversation_to' => $postData['user_id'],
+                    'conversation_from' => $this->Auth->user('id'),
+                ]]])->first();
+            
+            if(empty($conversation)) {
+                $conversation = $this->Conversations->newEntity();
+                $conversation->conversation_to = $this->Auth->user('id');
+                $conversation->conversation_from = $postData['user_id'];
+                $conversation->type = $postData['type'];
+                $conversation->status = 'active';
+                $this->Conversations->save($conversation);
+            }
             $_dir = 'webroot' . DS . 'img' . DS . 'uploads' . DS . 'chats' . DS . 'images' . DS;
                 
             if(!empty($_FILES)) {
@@ -766,19 +833,18 @@ class WebserviceController extends AppController {
                 }
                 move_uploaded_file($_FILES['message']['tmp_name'],$_dir.$fileName);
                 $postData['message'] = $fileName;
-                $postData['type'] = 'image'; 
-            } else {
-                $postData['type'] = 'text';
             }
 
             $this->Chats = TableRegistry::get('Chats');
             $obj = $this->Chats->newEntity();
             $obj->chat_to = $this->Auth->user('id');
+            $obj->conversation_id = $conversation->id;
             $obj->type = $postData['type'];
             $obj->chat_from = $postData['user_id'];
             $obj->message = $postData['message'];
             $obj->is_read = '0';
-            $obj->status = '1';
+            $obj->status = '1';            
+            $obj->time_stamp = $postData['time_stamp'];
             if($this->Chats->save($obj)) {
                 $obj->path = Router::url('/', true).$_dir;
                 $response = [
@@ -799,20 +865,85 @@ class WebserviceController extends AppController {
             'message' => 'Chat list not found',
             'code' => 404
         ];
-        $this->Chats = TableRegistry::get('Chats');
-        $chatList = $this->Chats->find()
-                    ->where(['chat_to'=>$this->Auth->user('id')])
-                    ->orWhere(['chat_from'=>$this->Auth->user('id')])
-                    ->contain(['users'  => function($q) {
-                        return $q->select(['first_name'=>'first_name','last_name'=>'last_name','email'=>'email','profile_photo'=>'profile_photo','photo_dir'=>'photo_dir']);
-                    }])
-                    ->group(['chat_from'])
-                    ->order(['Chats.id'=>'desc'])
-                    ->hydrate(false)->toArray();
+        $this->Conversations = TableRegistry::get('Conversations');
+        $conversations = $this->Conversations->find('list')
+                         // ->select(['id'])
+                         ->where(['conversation_to'=>$this->Auth->user('id')])
+                         ->orWhere(['conversation_from'=>$this->Auth->user('id')])
+                         ->hydrate(false)->toArray();
+        
+        $conn = ConnectionManager::get('default');
+        $stmt = $conn->execute('SELECT 
+                 p1.* 
+                 -- u.first_name,
+                 -- u.last_name,
+                 -- u.profile_photo,
+                 -- u.photo_dir
+                FROM chats p1
+                -- LEFT JOIN 
+                -- (
+                --     SELECT * FROM users 
+                -- ) u 
+                -- ON 
+                --     u.id = p1.chat_to 
+                --     AND
+                --     u.id = p1.chat_from                
+                INNER JOIN
+                (
+                    SELECT max(message) MaxPostDate, conversation_id,id primeryKey
+                    FROM chats
+                    WHERE conversation_id IN ('.implode(',',$conversations).')
+                    GROUP BY conversation_id
+                ) p2
+                  ON p1.conversation_id = p2.conversation_id
+                  AND p1.message = p2.MaxPostDate
+                WHERE p1.conversation_id IN ('.implode(',',$conversations).')
+                order by p1.id desc');
+        $chatList = $stmt ->fetchAll('assoc');
+        // $this->Chats = TableRegistry::get('Chats');
+        // $chatList = $this->Chats->find()
+        //             ->select([
+        //                 'u.first_name','u.last_name','u.profile_photo','u.photo_dir',
+        //                 'Chats.message','Chats.chat_to','Chats.chat_from','Chats.type','Chats.time_stamp','Chats.id'])
+                    // ->join([
+                    //     'table' => 'chats',
+                    //     'alias' => 'ch',
+                    //     'type' => 'LEFT',
+                    //     'conditions' => ['ch.id = Chats.id'],
+                    //     'order' => 'ch.id DESC',
+                    //     'group' => 'ch.conversation_id'
+                    // ])
+                    // ->join([
+                    //     'table' => 'users',
+                    //     'alias' => 'u',
+                    //     'type' => 'LEFT',
+                    //     'conditions' => ['OR'=> [
+                    //             'u.id = Chats.chat_to',
+                    //             'u.id = Chats.chat_from'
+                    //         ]
+                    //     ]
+                    //  ])
+                    // ->where(['Chats.conversation_id IN '=>['3','2']])
+                    // ->contain(['users'  => function($q) {
+                    //     return $q->select(['first_name'=>'first_name','last_name'=>'last_name','email'=>'email','profile_photo'=>'profile_photo','photo_dir'=>'photo_dir']);
+                    // }])
+                    // ->order(['Chats.id'=>'desc'])
+                    // ->group(['Chats.conversation_id'])
+                    // ->hydrate(false)->all();
         // print_r($chatList);die;
         if(!empty($chatList)) {
             foreach ($chatList as $key => $value) {
-                $chatList[$key]['profile_photo'] = !empty($value['profile_photo']) ? Router::url('/', true).$value['photo_dir'].$value['profile_photo']: Router::url('/', true).'img/user.png';
+                $userId = ($value['chat_to'] != $this->Auth->user('id')) ? $value['chat_to'] : $value['chat_from'];
+                $user = $this->Users->find()->select(['first_name','profile_photo','photo_dir'])->where(['id' => $userId])->first();
+                $chatList[$key] = 
+                [
+                    'from' => ($value['chat_to']!=$this->Auth->user('id'))?$value['chat_to']:$value['chat_from'],
+                    'message' => $value['message'],
+                    'type' => $value['type'],
+                    'fromImage' => !empty($user['profile_photo']) ? Router::url('/', true).$user['photo_dir'].$user['profile_photo']: Router::url('/', true).'img/user.png',
+                    'fromName' => $user['first_name'],
+                    'time_stamp' => $value['time_stamp']
+                ];
             }
             $response = [
                 'status' => true,
@@ -824,11 +955,132 @@ class WebserviceController extends AppController {
         $this->response($response);
     }
 
+    public function userchatlist() {
+        $response = [
+            'status' => false,
+            'code' => 404
+        ];
+
+        if(!empty($this->request->getData())) {
+            $this->Chats = TableRegistry::get('Chats');
+            $postData = $this->request->getData();
+            $chatList = $this->Chats->find()
+                        ->select(['type','chat_to','chat_from','message','time_stamp','is_read','u.first_name','u.profile_photo','u.photo_dir'])
+                        ->join([
+                            'table' => 'users',
+                            'alias' => 'u',
+                            'type' => 'LEFT',
+                            'conditions' => ['OR'=> [
+                                    'u.id = chat_to',
+                                    'u.id = chat_from'
+                                ]
+                            ]
+                         ])
+                        ->where(['OR'=>[[
+                            'chat_to' => $this->Auth->user('id'), 
+                            'chat_from' => $postData['user_id']
+                        ] , [
+                            'chat_to' => $postData['user_id'],
+                            'chat_from' => $this->Auth->user('id'),
+                        ]],['Chats.status'=>'active']])
+                        ->order(['Chats.id'=>'desc'])
+                        ->hydrate(false)->toArray();
+            if(!empty($chatList)) {
+                foreach ($chatList as $key => $value) {
+                    $chatList[$key]['from'] = ($value['chat_to']!=$this->Auth->user('id'))?$value['chat_to']:$value['chat_from'];
+                    $chatList[$key]['message'] = $value['message'];
+                    $chatList[$key]['type'] = $value['type'];
+                    $chatList[$key]['fromImage'] = !empty($value['u']['profile_photo']) ? Router::url('/', true).$value['u']['photo_dir'].$value['u']['profile_photo']: Router::url('/', true).'img/user.png';
+                    $chatList[$key]['fromName'] = $value['u']['first_name'];
+                    $chatList[$key]['time_stamp'] = $value['time_stamp'];
+                    unset($chatList[$key]['u']);
+                }
+                $response = [
+                    'status' => true,
+                    'message' => 'Chat list found',
+                    'code' => 200,
+                    'data' => $chatList
+                ];    
+            }            
+            $this->response($response); 
+        }
+    }
+
     public function logout() 
     {
         $this->Auth->logout();
         $this->request->session()->destroy();
         echo "string"; die;
+    }
+
+    public function userRating() {
+        $response = [
+            'status' => false,
+            'message' => 'rating not save',
+            'code' => 404
+        ];
+
+        if(!empty($this->request->getData())) {
+            $postData = $this->request->getData();
+            $this->UserRatings = TableRegistry::get('UserRatings');
+            $obj = $this->UserRatings->newEntity();
+            $obj->user_from = $this->Auth->user('id');
+            $obj->user_to = $postData['user_id'];
+            $obj->rating = $postData['rating'];
+            $obj->comment = $postData['comment'];
+            $obj->status = 'active';
+            if($this->UserRatings->save($obj)) {
+                $response = [
+                    'status' => true,
+                    'message' => 'rating saved',
+                    'code' => 200
+                ];
+            }
+        }
+        $this->response($response);
+    }
+
+    public function listwin() {
+        $response = [
+            'status' => false,
+            'message' => 'list not found',
+            'code' => 404
+        ];
+        $this->playwin = TableRegistry::get('playwins');
+        $playList = $this->playwin->find()->where(['status' => 'active'])->hydrate(false)->toArray();
+        if(!empty($playList)) {
+            $response = [
+                'status' => true,
+                'message' => 'List found',
+                'data' => $playList,
+                'code' => 200
+            ];
+        }
+        $this->response($response);
+    }
+
+    public function joinwin() {
+        $response = [
+            'status' => false,
+            'message' => 'user not join',
+            'code' => 404
+        ];
+        if(!empty($this->request->getData())) {
+            $postData = $this->request->getData();
+            $this->playwinjoin = TableRegistry::get('PlaywinJoin');
+            $joinWin = $this->playwinjoin->newEntity();
+            $joinWin->user_id = $this->Auth->user('id');
+            $joinWin->playwin_id = $postData['id'];
+            $joinWin->status = 'play';
+            if($this->playwinjoin->save($joinWin)) {
+                $response = [
+                    'status' => true,
+                    'message' => 'user joined',
+                    'code' => 200
+                ];
+            }
+        }
+        $this->response($response);
     }
 
     public function token($user_id = '') 
@@ -841,7 +1093,7 @@ class WebserviceController extends AppController {
             // 'success' => true,
                 'token' => JWT::encode([
                     'sub' => !empty($user_id) ? $user_id : $user['id'],
-                    'exp' =>  time() + 604800
+                    'exp' =>  time() + 6048000
                 ],
                 Security::salt())
             // '_serialize' => ['success', 'data']

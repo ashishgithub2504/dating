@@ -3,7 +3,7 @@
  * @var \App\View\AppView $this
  * @var \Cake\Datasource\EntityInterface[]|\Cake\Collection\CollectionInterface $users
  */
-
+use Cake\Routing\Router;
 ?>
 <section class="content-header">
     <h1>
@@ -129,8 +129,11 @@
                                         <td>
                                             
                                             <?php 
-                                            if (!empty($user->profile_photo) && file_exists("img/".$user->image_path . $user->profile_photo)) { 
-                                                 echo $this->Glide->image($user->image_path . $user->profile_photo, ['w'=>'50', 'h'=>'50','fit'=>'fill']);
+                                            // echo '<pre>';
+                                            // print_r($user->photo_dir); die;
+                                            if (!empty($user->profile_photo) && file_exists($user->photo_dir. $user->profile_photo)) { 
+                                                $imgDir = Router::url('/', true).str_replace('webroot/','',$user->photo_dir).$user->profile_photo;
+                                                 echo $this->Html->image($imgDir, ['width'=>'50px', 'fit'=>'fill']);
                                             }else{
                                                 echo $this->Glide->image("no_image.gif", ['w'=>'50', 'h'=>'50','fit'=>'fill']);
                                             }

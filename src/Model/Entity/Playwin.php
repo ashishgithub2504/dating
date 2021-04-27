@@ -4,17 +4,20 @@ namespace App\Model\Entity;
 use Cake\ORM\Entity;
 
 /**
- * Chat Entity
+ * Playwin Entity
  *
  * @property int $id
- * @property string $type
- * @property int $chat_to
- * @property int $chat_from
- * @property string $message
- * @property int|null $is_read
+ * @property string $name
+ * @property int $max
+ * @property int|null $coin
+ * @property int|null $return_coin
+ * @property int|null $win_coin
+ * @property string|null $comment
  * @property string|null $status
+ *
+ * @property \App\Model\Entity\PlaywinJoin[] $playwin_join
  */
-class Chat extends Entity
+class Playwin extends Entity
 {
     /**
      * Fields that can be mass assigned using newEntity() or patchEntity().
@@ -26,13 +29,13 @@ class Chat extends Entity
      * @var array
      */
     protected $_accessible = [
-        'type' => true,
-        'chat_to' => true,
-        'chat_from' => true,
-        'message' => true,
-        'is_read' => true,
+        'name' => true,
+        'max' => true,
+        'coin' => true,
+        'return_coin' => true,
+        'win_coin' => true,
+        'comment' => true,
         'status' => true,
-        'time_stamp' => true,
-        'conversation_id' => true
+        'playwin_join' => true
     ];
 }

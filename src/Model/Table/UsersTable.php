@@ -59,6 +59,11 @@ class UsersTable extends Table
         $this->hasMany('UserTokens', [
             'foreignKey' => 'user_id'
         ]);
+        $this->hasMany('Chats', [
+            'foreignKey' => 'user_to',
+            'targetForeignKey' => 'user_to',
+            'joinTable' => 'users'
+        ]);
         $this->belongsToMany('AccountTypes', [
             'foreignKey' => 'user_id',
             'targetForeignKey' => 'account_type_id',

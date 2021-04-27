@@ -29,6 +29,9 @@
         <div class="box-body">
             <div class="row">
                 <div class="col-md-6">
+                    <?php echo $this->Form->control('username', ['class' => 'form-control', 'placeholder' => __('User Name')]); ?>
+                </div>
+                <div class="col-md-6">
                     <?php echo $this->Form->control('first_name', ['class' => 'form-control', 'placeholder' => __('First Name')]); ?>
                 </div>
                 <div class="col-md-6">

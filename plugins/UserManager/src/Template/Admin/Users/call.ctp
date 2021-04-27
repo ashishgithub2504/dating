@@ -22,7 +22,7 @@
                                 <th scope="col"><?= $this->Paginator->sort('first_name', 'User Name') ?></th>
                                 <th scope="col"><?= $this->Paginator->sort('type') ?></th>
                                 <th scope="col"><?= $this->Paginator->sort('start_time') ?></th>
-                                <th scope="col"><?= $this->Paginator->sort('end_time') ?></th>
+                                <th scope="col"><?= $this->Paginator->sort('end_time','Duration') ?></th>
                                 <th scope="col"><?= $this->Paginator->sort('status') ?></th>
                             </tr>
                         </thead>
@@ -40,10 +40,13 @@
                                             <?= $user['type']; ?>  
                                         </td>
                                         <td>
-                                            <?= $user['start_time']; ?>
+                                            <?= date('d-M-Y h:i A',strtotime($user['start_time'])); ?>
                                         </td>
                                         <td>
-                                            <?= $user['end_time']; ?>
+                                            <?php
+                                            $seconds = strtotime($user['end_time']) - strtotime($user['start_time']);
+                                            echo $hours = ($seconds / 60).' Min';
+                                            ?>
                                         </td>
                                         <td>
                                             <?= $user['status']; ?>

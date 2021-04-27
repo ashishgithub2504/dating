@@ -4,17 +4,16 @@ namespace App\Model\Entity;
 use Cake\ORM\Entity;
 
 /**
- * Chat Entity
+ * UserRating Entity
  *
  * @property int $id
- * @property string $type
- * @property int $chat_to
- * @property int $chat_from
- * @property string $message
- * @property int|null $is_read
+ * @property int $user_from
+ * @property int $user_to
+ * @property string $rating
+ * @property string $comment
  * @property string|null $status
  */
-class Chat extends Entity
+class UserRating extends Entity
 {
     /**
      * Fields that can be mass assigned using newEntity() or patchEntity().
@@ -26,13 +25,10 @@ class Chat extends Entity
      * @var array
      */
     protected $_accessible = [
-        'type' => true,
-        'chat_to' => true,
-        'chat_from' => true,
-        'message' => true,
-        'is_read' => true,
-        'status' => true,
-        'time_stamp' => true,
-        'conversation_id' => true
+        'user_from' => true,
+        'user_to' => true,
+        'rating' => true,
+        'comment' => true,
+        'status' => true
     ];
 }

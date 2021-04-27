@@ -34,7 +34,7 @@ class ChatsTable extends Table
         $this->setDisplayField('id');
         $this->setPrimaryKey('id');
 
-        $this->hasOne('Users', [
+        $this->belongsTo('Users', [
             'foreignKey' => 'id'
         ]);
     }
