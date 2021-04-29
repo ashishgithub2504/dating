@@ -55,6 +55,13 @@ $ctrl = strtolower($this->request->getParam('controller'));
                 ?>
             </li>
 
+            <li class="<?php echo (in_array($act, array("index", "add", "edit", "view")) && $ctrl == "playwins") ? "active" : ""; ?>">
+                <?php
+                echo $this->Html->link("<i class=\"fa fa-circle-o\"></i> Playwin Manager", ["controller" => "playwins", "action" => "index", "plugin" => false], ["class" => "", "escape" => false]);
+
+                ?>
+            </li>
+
             <li class="<?php echo (in_array($act, array("index", "add", "edit", "view")) && $ctrl == "coupons") ? "active" : ""; ?>">
                 <?php
                 echo $this->Html->link("<i class=\"fa fa-circle-o\"></i> Coupon Manager", ["controller" => "coupons", "action" => "index", "plugin" => false], ["class" => "", "escape" => false]);

@@ -4,7 +4,7 @@ namespace App\Controller\Api;
 use App\Controller\AppController;
 use Cake\ORM\TableRegistry;
 use Cake\Http\ServerRequest;
-
+use Cake\Routing\Router;
 /**
  * Users Controller
  *
@@ -27,14 +27,33 @@ class UsersController extends AppController
             'message' => 'List Not found',
             'code' => 404
         ];
-        $this->userPlan = TableRegistry::get('UserPlans');
-        $plans = $this->userPlan->find()->select(['id','amount','no_of_coin','status','created'])->where(['user_id' => $this->Auth->user('id'),'status' => 'active'])->order(['created'=>'desc'])->hydrate(false)->toArray();
+        $this->UserHistory = TableRegistry::get('UserHistory');
+        $plans = $this->UserHistory->find()
+        ->contain([
+                'users'=> function($q) {
+                    return $q->select(['username','profile_photo','photo_dir']);
+                }
+        ])
+        ->where(['UserHistory.user_id' => $this->Auth->user('id'),'UserHistory.status' => 'active'])
+        ->order(['date'=>'desc'])->hydrate(false)->toArray();
         if(!empty($plans)) {
+            foreach ($plans as $key => $value) {
+                $result[] = [
+                    'user_id' => $value['user_id'],
+                    'user_to' => $value['user_to'],
+                    'type' => $value['type'],
+                    'coin' => $value['coin'],
+                    'username' => $value['Users']['username'],
+                    'profile_photo' => !empty($value['profile_photo']) ? Router::url('/', true).str_replace('webroot/','',$value['photo_dir']).$value['profile_photo'] : Router::url('/', true).'img/user.png', 
+                    'duration' => $value['duration'],
+                    'date' => strtotime($value['date'])
+                ];
+            }
             $response = [
                 'status' => true,
                 'code' => 200,
                 'message' => 'List found',
-                'data' => $plans,
+                'data' => $result,
             ];
         }
 

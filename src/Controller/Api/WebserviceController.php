@@ -248,6 +248,11 @@ class WebserviceController extends AppController {
         $user = $this->Users->patchEntity($user, $this->request->data);
         
         if ($this->Users->save($user)) {
+            $this->userAccount = TableRegistry::get('UsersAccountTypes');
+            $userAccountType = $this->userAccount->newEntity();
+            $userAccountType->user_id = $user->id;
+            $userAccountType->account_type_id = isset($this->request->data['type'])?$this->request->data['type']:'2';
+            $this->userAccount->save($userAccountType);
             $userInfo = $this->_loginresponse($user->id);
             $userInfo['profile_photo'] = !empty($userInfo['profile_photo']) ? Router::url('/', true).str_replace('webroot/','',$userInfo['photo_dir']).$userInfo['profile_photo'] : Router::url('/', true).'img/user.png';
             $userInfo['token'] = json_decode($this->token($user->id))->token;
@@ -1057,6 +1062,17 @@ class WebserviceController extends AppController {
             ];
         }
         $this->response($response);
+    }
+
+    public function history() {
+        $response = [
+            'status' => false,
+            'message' => 'list not found',
+            'code' => 404
+        ];
+
+        $userHistory = UserHistory::find()->where(['status'=>'active','user_id' => $this->Auth->user('id')])->asArray()->all();
+        print_r($userHistory); die;
     }
 
     public function joinwin() {

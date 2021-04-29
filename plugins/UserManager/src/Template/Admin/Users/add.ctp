@@ -3,7 +3,8 @@
  * @var \App\View\AppView $this
  * @var \Cake\Datasource\EntityInterface $user
  */
-
+// echo '<pre>';
+// print_r($user->account_types); die;
 ?>
 <section class="content-header">
     <h1>
@@ -37,6 +38,14 @@
                 <div class="col-md-6">
                     <?php echo $this->Form->control('last_name', ['class' => 'form-control', 'placeholder' => __('Last Name')]); ?>
                 </div>
+                <?php if(!empty($user->account_types) &&$user->account_types['0']['id'] == '1') { ?>
+                <div class="col-md-6">
+                    <?php echo $this->Form->control('audio_call_rate', ['class' => 'form-control', 'placeholder' => __('Audio Call Rate')]); ?>
+                </div>
+                <div class="col-md-6">
+                    <?php echo $this->Form->control('video_call_rate', ['class' => 'form-control', 'placeholder' => __('Video Call Rate')]); ?>
+                </div>
+                <?php } ?>
             </div>
             <div class="row">
                 <div class="col-md-6">

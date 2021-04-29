@@ -28,6 +28,7 @@
                         </thead>
                         <tbody>
                             <?php
+                            $totalDuration = '0';
                             if (!empty($callInfo)):
                                 foreach ($callInfo as $i=>$user):
                                     ?>
@@ -46,6 +47,7 @@
                                             <?php
                                             $seconds = strtotime($user['end_time']) - strtotime($user['start_time']);
                                             echo $hours = ($seconds / 60).' Min';
+                                            $totalDuration = $totalDuration+($seconds / 60);
                                             ?>
                                         </td>
                                         <td>
@@ -59,6 +61,10 @@
                             <?php else: ?>
                                 <tr> <td colspan='16' align='center' class="tbodyNotFound" style="text-align:center;"> <strong>Record Not Available</strong> </td> </tr>
 <?php endif; ?>
+                        <tr>
+                            <td colspan="4"><b>Total Duration (In Minute)</b></td>
+                            <td><b><?= $totalDuration.' Min'; ?></b></td>
+                        </tr>
                         </tbody>
                     </table>
 

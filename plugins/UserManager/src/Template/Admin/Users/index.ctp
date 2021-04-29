@@ -135,7 +135,7 @@ use Cake\Routing\Router;
                                                 $imgDir = Router::url('/', true).str_replace('webroot/','',$user->photo_dir).$user->profile_photo;
                                                  echo $this->Html->image($imgDir, ['width'=>'50px', 'fit'=>'fill']);
                                             }else{
-                                                echo $this->Glide->image("no_image.gif", ['w'=>'50', 'h'=>'50','fit'=>'fill']);
+                                                echo $this->Html->image(Router::url('/', true).'img/user.png', ['width'=>'50px', 'h'=>'50','fit'=>'fill']);
                                             }
                                             ?>
                                         </td>
